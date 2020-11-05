@@ -133,6 +133,21 @@ TxOut
     Primary txOutputTxId txOutputIndex
     deriving Show Generic
 
+TokenBundle
+    tokenBundleTxId           TxId              sql=tx_id
+    tokenBundleTxIndex        Word32            sql=tx_index
+    tokenBundleTokenPolicyId  W.TokenPolicyId   sql=token_policy_id
+    tokenBundleTokenName      W.TokenName       sql=token_name
+    tokenBundleTokenCount     W.TokenCount      sql=token_count
+
+    Primary
+        tokenBundleTxId
+        tokenBundleTxIndex
+        tokenBundleTokenPolicyId
+        tokenBundleTokenName
+
+    deriving Show Generic
+
 -- | A transaction withdrawal associated with TxMeta.
 --
 -- There is no wallet ID because these values depend only on the transaction,

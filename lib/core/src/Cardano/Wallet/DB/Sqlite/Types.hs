@@ -51,6 +51,9 @@ import Cardano.Wallet.Primitive.Types
     , StakePoolMetadataHash (..)
     , StakePoolMetadataUrl (..)
     , StakePoolTicker
+    , TokenCount (..)
+    , TokenName (..)
+    , TokenPolicyId (..)
     , TxMetadata
     , TxStatus (..)
     , WalletId (..)
@@ -255,6 +258,43 @@ instance FromHttpApiData TxId where
 instance PathPiece TxId where
     toPathPiece = toText . getTxId
     fromPathPiece = fmap TxId . fromTextMaybe
+
+--------------------------------------------------------------------------------
+-- Token Bundles
+--------------------------------------------------------------------------------
+
+instance PersistField TokenCount where
+    toPersistValue = toPersistValue . toText
+    fromPersistValue = fromPersistValueFromText
+
+instance PersistFieldSql TokenCount where
+    sqlType _ = sqlType (Proxy @Text)
+
+instance PersistField TokenName where
+    toPersistValue = toPersistValue . toText
+    fromPersistValue = fromPersistValueFromText
+
+instance PersistFieldSql TokenName where
+    sqlType _ = sqlType (Proxy @Text)
+
+instance ToJSON TokenName where
+    toJSON = String . toText
+
+instance FromJSON TokenName where
+    parseJSON = fmap TokenName . aesonFromText "TokenName"
+
+instance PersistField TokenPolicyId where
+    toPersistValue = toPersistValue . toText
+    fromPersistValue = fromPersistValueFromText
+
+instance PersistFieldSql TokenPolicyId where
+    sqlType _ = sqlType (Proxy @Text)
+
+instance ToJSON TokenPolicyId where
+    toJSON = String . toText
+
+instance FromJSON TokenPolicyId where
+    parseJSON = fmap TokenPolicyId . aesonFromText "TokenPolicyId"
 
 ----------------------------------------------------------------------------
 -- BlockId

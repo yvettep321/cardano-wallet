@@ -2006,7 +2006,7 @@ class Dom a where
 newtype Hash (tag :: Symbol) = Hash { getHash :: ByteString }
     deriving stock (Generic, Eq, Ord)
     deriving newtype (ByteArrayAccess)
-    deriving Show via (Quiet (Hash tag))
+    deriving (Read, Show) via (Quiet (Hash tag))
 
 instance NFData (Hash tag)
 
