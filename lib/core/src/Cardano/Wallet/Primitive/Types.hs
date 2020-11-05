@@ -83,6 +83,16 @@ module Cardano.Wallet.Primitive.Types
     , Coin (..)
     , isValidCoin
 
+    -- * Token Bundles
+    , TokenBundle (..)
+    , TokenCount (..)
+    , TokenName (..)
+    , TokenPolicyId (..)
+    , mkTokenBundle
+    , mkTokenPolicyId
+    , tokenBundleFromList
+    , tokenBundleToList
+
     -- * UTxO
     , UTxO (..)
     , balance
@@ -214,7 +224,7 @@ import Crypto.Hash
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), withObject, (.:), (.:?) )
 import Data.Bifunctor
-    ( bimap )
+    ( bimap, first )
 import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteArray.Encoding
@@ -267,6 +277,7 @@ import Fmt
     ( Buildable (..)
     , blockListF
     , blockListF'
+    , blockMapF
     , fixedF
     , fmt
     , indentF
@@ -1269,6 +1280,126 @@ instance Buildable Coin where
 isValidCoin :: Coin -> Bool
 isValidCoin c = c >= minBound && c <= maxBound
 
+--------------------------------------------------------------------------------
+-- Token Bundles
+--------------------------------------------------------------------------------
+
+newtype TokenBundle = TokenBundle
+    { unTokenBundle :: Map TokenPolicyId (Map TokenName TokenCount) }
+    deriving stock (Eq, Ord, Generic)
+    deriving Show via (Quiet TokenBundle)
+
+instance NFData TokenBundle
+
+instance Semigroup TokenBundle where
+    TokenBundle a <> TokenBundle b = TokenBundle $
+        Map.unionWith (Map.unionWith (<>)) a b
+
+instance Monoid TokenBundle where
+    mempty = TokenBundle mempty
+
+instance Buildable TokenBundle where
+    build = buildBundle . unTokenBundle
+      where
+        buildBundle b = buildMap
+            [ ("token-bundle",
+                buildList buildOuterElement b)
+            ]
+        buildOuterElement (tokenPolicyId, assetMap) = buildMap
+            [ ("token-policy-id",
+                build tokenPolicyId)
+            , ("tokens",
+                buildList buildInnerElement assetMap)
+            ]
+        buildInnerElement (tokenName, tokenCount) = buildMap
+            [ ("token-name",
+                build tokenName)
+            , ("token-count",
+                build tokenCount)
+            ]
+        buildList buildElement =
+            blockListF' "-" buildElement . Map.toList
+        buildMap =
+            blockMapF . fmap (first $ id @String)
+
+mkTokenBundle :: TokenPolicyId -> TokenName -> TokenCount -> TokenBundle
+mkTokenBundle tpid tokenName tokenCount =
+    tokenBundleFromList [(tpid, [(tokenName, tokenCount)])]
+
+tokenBundleFromList
+    :: [(TokenPolicyId, [(TokenName, TokenCount)])] -> TokenBundle
+tokenBundleFromList = TokenBundle . Map.fromList . fmap (fmap Map.fromList)
+
+tokenBundleToList
+    :: TokenBundle -> [(TokenPolicyId, [(TokenName, TokenCount)])]
+tokenBundleToList = fmap (fmap Map.toList) . Map.toList . unTokenBundle
+
+--------------------------------------------------------------------------------
+-- Token Counts
+--------------------------------------------------------------------------------
+
+newtype TokenCount = TokenCount
+    { unTokenCount :: Natural }
+    deriving stock (Eq, Ord, Generic)
+    deriving (Read, Show) via (Quiet TokenCount)
+
+instance NFData TokenCount
+
+instance Semigroup TokenCount where
+    TokenCount x <> TokenCount y = TokenCount $ x + y
+
+instance Buildable TokenCount where
+    build = build . toText . unTokenCount
+
+instance ToText TokenCount where
+    toText = toText . unTokenCount
+
+instance FromText TokenCount where
+    fromText = fmap (TokenCount . fromIntegral @Natural) . fromText
+
+--------------------------------------------------------------------------------
+-- Token Names
+--------------------------------------------------------------------------------
+
+newtype TokenName = TokenName
+    { unTokenName :: Text }
+    deriving stock (Eq, Ord, Generic)
+    deriving (Read, Show) via (Quiet TokenName)
+
+instance NFData TokenName
+
+instance Buildable TokenName where
+    build = build . unTokenName
+
+instance ToText TokenName where
+    toText = unTokenName
+
+instance FromText TokenName where
+    fromText = pure . TokenName
+
+--------------------------------------------------------------------------------
+-- Token Policy Ids
+--------------------------------------------------------------------------------
+
+newtype TokenPolicyId = TokenPolicyId
+    { unTokenPolicyId :: Hash "TokenPolicy" }
+    deriving stock (Eq, Ord, Generic)
+    deriving (Read, Show) via (Quiet TokenPolicyId)
+
+instance NFData TokenPolicyId
+
+instance Buildable TokenPolicyId where
+    build = build . toText . unTokenPolicyId
+
+mkTokenPolicyId :: ByteString -> TokenPolicyId
+mkTokenPolicyId = TokenPolicyId . Hash
+
+instance ToText TokenPolicyId where
+    toText = toText . unTokenPolicyId
+
+instance FromText TokenPolicyId where
+    fromText = fmap TokenPolicyId . fromText
+
 {-------------------------------------------------------------------------------
                                     UTxO
 -------------------------------------------------------------------------------}
@@ -1894,6 +2025,7 @@ instance FromText (Hash "Genesis")         where fromText = hashFromText 32
 instance FromText (Hash "Block")           where fromText = hashFromText 32
 instance FromText (Hash "BlockHeader")     where fromText = hashFromText 32
 instance FromText (Hash "ChimericAccount") where fromText = hashFromText 28
+instance FromText (Hash "TokenPolicy")     where fromText = hashFromText 28
 
 hashFromText
     :: forall t. (KnownSymbol t)
