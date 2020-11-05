@@ -6,6 +6,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -288,6 +289,8 @@ import Network.URI
     ( URI (..), parseAbsoluteURI, uriQuery, uriScheme, uriToString )
 import Numeric.Natural
     ( Natural )
+import Quiet
+    ( Quiet (Quiet) )
 import System.Random
     ( randomRIO )
 
@@ -1238,7 +1241,9 @@ instance ToText DerivationIndex where
 -- | Coins are stored as Lovelace (reminder: 1 Lovelace = 1e-6 ADA)
 newtype Coin = Coin
     { getCoin :: Word64
-    } deriving stock (Show, Ord, Eq, Generic)
+    }
+    deriving stock (Ord, Eq, Generic)
+    deriving Show via (Quiet Coin)
 
 instance ToText Coin where
     toText (Coin c) = T.pack $ show c
