@@ -77,6 +77,9 @@ import Cardano.Wallet.Primitive.Types
     , SlotLength (..)
     , SlotNo (..)
     , StartTime (..)
+    , TokenCount (..)
+    , TokenName (..)
+    , TokenPolicyId (..)
     , Tx (..)
     , TxIn (..)
     , TxMeta (..)
@@ -228,6 +231,9 @@ spec = do
         textRoundtrip $ Proxy @SyncTolerance
         textRoundtrip $ Proxy @PoolId
         textRoundtrip $ Proxy @PoolOwner
+        textRoundtrip $ Proxy @TokenCount
+        textRoundtrip $ Proxy @TokenName
+        textRoundtrip $ Proxy @TokenPolicyId
 
         -- Extra hand-crafted tests
         it "Valid account IDs are properly decoded from text" $ do
@@ -1155,6 +1161,17 @@ instance Arbitrary (Hash "ChimericAccount") where
 instance Arbitrary (Hash "BlockHeader") where
     arbitrary = Hash . BS.pack <$> vector 32
 
+instance Arbitrary (Hash "TokenPolicy") where
+    -- No Shrinking
+    arbitrary = elements
+        [ Hash $ unsafeFromHex
+            "00000000000000000000000000000000000000000000000000000001"
+        , Hash $ unsafeFromHex
+            "00000000000000000000000000000000000000000000000000000002"
+        , Hash $ unsafeFromHex
+            "00000000000000000000000000000000000000000000000000000003"
+        ]
+
 instance Arbitrary (Hash "Tx") where
     -- No Shrinking
     arbitrary = elements
@@ -1411,6 +1428,18 @@ instance Arbitrary PoolId where
 
 instance Arbitrary PoolOwner where
     arbitrary = PoolOwner . BS.pack <$> vector 32
+
+instance Arbitrary TokenCount where
+    arbitrary = TokenCount . fromIntegral @Integer <$> choose (0, 1000)
+    shrink (TokenCount c) = TokenCount <$> shrinkIntegral c
+
+instance Arbitrary TokenName where
+    arbitrary = TokenName .T.pack  <$> replicateM 8 (choose ('A', 'Z'))
+    shrink (TokenName t) = TokenName . T.pack <$> shrink (T.unpack t)
+
+instance Arbitrary TokenPolicyId where
+    arbitrary = TokenPolicyId <$> arbitrary
+    shrink _ = []
 
 {-------------------------------------------------------------------------------
                                   Test data
