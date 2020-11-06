@@ -202,6 +202,7 @@ import Test.QuickCheck.Classes
     , eqLaws
     , monoidLaws
     , ordLaws
+    , semigroupLaws
     , semigroupMonoidLaws
     , showReadLaws
     )
@@ -211,6 +212,8 @@ import Test.Text.Roundtrip
     ( textRoundtrip )
 import Test.Utils.Laws
     ( testLawsMany )
+import Test.Utils.Laws.PartialOrd
+    ( partialOrdLaws )
 import Test.Utils.Time
     ( genUniformTime, genUniformTimeWithinRange, getUniformTime )
 
@@ -228,8 +231,10 @@ spec = do
     describe "Class instances obey laws" $ do
         testLawsMany @TokenBundle
             [ eqLaws
+            , partialOrdLaws
             , monoidLaws
             , commutativeMonoidLaws
+            , semigroupLaws
             , semigroupMonoidLaws
             ]
         testLawsMany @TokenCount
@@ -246,6 +251,12 @@ spec = do
             [ eqLaws
             , ordLaws
             , showReadLaws
+            ]
+        testLawsMany @UTxO
+            [ eqLaws
+            , ordLaws
+            , monoidLaws
+            , semigroupLaws
             ]
 
     describe "Can perform roundtrip textual encoding & decoding" $ do

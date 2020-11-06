@@ -92,6 +92,7 @@ module Cardano.Wallet.Primitive.Types
     , mkTokenPolicyId
     , tokenBundleFromList
     , tokenBundleToList
+    , tokenBundleLookup
 
     -- * UTxO
     , UTxO (..)
@@ -201,6 +202,8 @@ module Cardano.Wallet.Primitive.Types
 
 import Prelude
 
+import Algebra.PartialOrd
+    ( PartialOrd (..) )
 import Cardano.Api.Typed
     ( TxMetadata (..), TxMetadataValue (..) )
 import Cardano.Slotting.Slot
@@ -1286,10 +1289,33 @@ isValidCoin c = c >= minBound && c <= maxBound
 
 newtype TokenBundle = TokenBundle
     { unTokenBundle :: Map TokenPolicyId (Map TokenName TokenCount) }
-    deriving stock (Eq, Ord, Generic)
+    deriving stock (Eq, Generic)
     deriving Show via (Quiet TokenBundle)
 
 instance NFData TokenBundle
+
+-- | Provides a partial ordering on token bundles.
+--
+-- For a given pair of token bundles 'a' and 'b', 'a ≤ b' if and only if:
+--
+--   - every token in bundle 'a' also appears in bundle 'b'.
+--
+--   - every token in bundle 'a' has an amount that is less than or equal to
+--     the amount of the same token in bundle 'b'.
+--
+-- In other words, bundle 'a' must be a subset of bundle 'b'.
+--
+instance PartialOrd TokenBundle where
+    a `leq` b = all policyCovered (tokenBundleToList a)
+      where
+        policyCovered :: (TokenPolicyId, [(TokenName, TokenCount)]) -> Bool
+        policyCovered (policyId, tokenCounts) =
+            all (uncurry $ tokenCovered policyId) tokenCounts
+        tokenCovered :: TokenPolicyId -> TokenName -> TokenCount -> Bool
+        tokenCovered policyId tokenName tokenCount =
+            case tokenBundleLookup b policyId tokenName of
+                Nothing -> False
+                Just tokenCount' -> tokenCount <= tokenCount'
 
 instance Semigroup TokenBundle where
     TokenBundle a <> TokenBundle b = TokenBundle $
@@ -1324,15 +1350,22 @@ instance Buildable TokenBundle where
 
 mkTokenBundle :: TokenPolicyId -> TokenName -> TokenCount -> TokenBundle
 mkTokenBundle tpid tokenName tokenCount =
-    tokenBundleFromList [(tpid, [(tokenName, tokenCount)])]
+    tokenBundleFromList [(tpid, (tokenName, tokenCount) :| [])]
 
 tokenBundleFromList
-    :: [(TokenPolicyId, [(TokenName, TokenCount)])] -> TokenBundle
-tokenBundleFromList = TokenBundle . Map.fromList . fmap (fmap Map.fromList)
+    :: [(TokenPolicyId, NonEmpty (TokenName, TokenCount))] -> TokenBundle
+tokenBundleFromList =
+    TokenBundle . Map.fromList . fmap (fmap (Map.fromList . NE.toList))
 
 tokenBundleToList
     :: TokenBundle -> [(TokenPolicyId, [(TokenName, TokenCount)])]
 tokenBundleToList = fmap (fmap Map.toList) . Map.toList . unTokenBundle
+
+tokenBundleLookup
+    :: TokenBundle -> TokenPolicyId -> TokenName -> Maybe TokenCount
+tokenBundleLookup (TokenBundle bundle) policyId tokenName = do
+    innerMap <- Map.lookup policyId bundle
+    Map.lookup tokenName innerMap
 
 --------------------------------------------------------------------------------
 -- Token Counts

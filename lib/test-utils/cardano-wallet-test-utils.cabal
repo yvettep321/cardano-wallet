@@ -42,9 +42,11 @@ library
     , hspec-golden-aeson
     , http-api-data
     , iohk-monitoring
+    , lattices
     , process
     , QuickCheck
     , quickcheck-classes
+    , quickcheck-classes-base
     , stm
     , template-haskell
     , time
@@ -56,6 +58,7 @@ library
       Test.Hspec.Extra
       Test.Utils.FilePath
       Test.Utils.Laws
+      Test.Utils.Laws.PartialOrd
       Test.Utils.Paths
       Test.Utils.Roundtrip
       Test.Utils.StaticServer
