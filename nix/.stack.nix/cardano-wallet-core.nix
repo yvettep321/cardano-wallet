@@ -156,6 +156,7 @@
             (hsPkgs."OddWord" or (errorHandler.buildDepError "OddWord"))
             (hsPkgs."QuickCheck" or (errorHandler.buildDepError "QuickCheck"))
             (hsPkgs."quickcheck-state-machine" or (errorHandler.buildDepError "quickcheck-state-machine"))
+            (hsPkgs."quickcheck-classes" or (errorHandler.buildDepError "quickcheck-classes"))
             (hsPkgs."random" or (errorHandler.buildDepError "random"))
             (hsPkgs."retry" or (errorHandler.buildDepError "retry"))
             (hsPkgs."safe" or (errorHandler.buildDepError "safe"))

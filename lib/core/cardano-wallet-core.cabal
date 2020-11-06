@@ -234,6 +234,7 @@ test-suite unit
     , OddWord
     , QuickCheck
     , quickcheck-state-machine >= 0.6.0
+    , quickcheck-classes
     , random
     , retry
     , safe
