@@ -77,6 +77,7 @@ import Cardano.Wallet.Primitive.Types
     , SlotLength (..)
     , SlotNo (..)
     , StartTime (..)
+    , TokenBundle (..)
     , TokenCount (..)
     , TokenName (..)
     , TokenPolicyId (..)
@@ -196,10 +197,20 @@ import Test.QuickCheck
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary, genericShrink )
+import Test.QuickCheck.Classes
+    ( commutativeMonoidLaws
+    , eqLaws
+    , monoidLaws
+    , ordLaws
+    , semigroupMonoidLaws
+    , showReadLaws
+    )
 import Test.QuickCheck.Monadic
     ( monadicIO, run )
 import Test.Text.Roundtrip
     ( textRoundtrip )
+import Test.Utils.Laws
+    ( testLawsMany )
 import Test.Utils.Time
     ( genUniformTime, genUniformTimeWithinRange, getUniformTime )
 
@@ -213,6 +224,29 @@ spec :: Spec
 spec = do
     describe "Generators are valid" $ do
         it "Arbitrary Coin" $ property isValidCoin
+
+    describe "Class instances obey laws" $ do
+        testLawsMany @TokenBundle
+            [ eqLaws
+            , monoidLaws
+            , commutativeMonoidLaws
+            , semigroupMonoidLaws
+            ]
+        testLawsMany @TokenCount
+            [ eqLaws
+            , ordLaws
+            , showReadLaws
+            ]
+        testLawsMany @TokenName
+            [ eqLaws
+            , ordLaws
+            , showReadLaws
+            ]
+        testLawsMany @TokenPolicyId
+            [ eqLaws
+            , ordLaws
+            , showReadLaws
+            ]
 
     describe "Can perform roundtrip textual encoding & decoding" $ do
         textRoundtrip $ Proxy @Address
@@ -1428,6 +1462,10 @@ instance Arbitrary PoolId where
 
 instance Arbitrary PoolOwner where
     arbitrary = PoolOwner . BS.pack <$> vector 32
+
+instance Arbitrary TokenBundle where
+    arbitrary = genericArbitrary
+    shrink = genericShrink
 
 instance Arbitrary TokenCount where
     arbitrary = TokenCount . fromIntegral @Integer <$> choose (0, 1000)
