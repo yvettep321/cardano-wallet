@@ -34,12 +34,13 @@ import Cardano.Wallet.Primitive.Fee
 import Cardano.Wallet.Primitive.Types
     ( Address (..)
     , Coin (..)
-    , Hash (..)
     , ShowFmt (..)
     , TxIn (..)
     , TxOut (..)
     , UTxO (..)
     )
+import Cardano.Wallet.Primitive.Types.Hash
+    ( Hash (..) )
 import Control.Arrow
     ( first )
 import Control.Monad.IO.Class
