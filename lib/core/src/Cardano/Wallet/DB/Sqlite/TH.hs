@@ -138,7 +138,7 @@ TokenBundle
     tokenBundleTxIndex        Word32            sql=tx_index
     tokenBundleTokenPolicyId  W.TokenPolicyId   sql=token_policy_id
     tokenBundleTokenName      W.TokenName       sql=token_name
-    tokenBundleTokenCount     W.TokenCount      sql=token_count
+    tokenBundleTokenQuantity  W.TokenQuantity   sql=token_quantity
 
     Primary
         tokenBundleTxId

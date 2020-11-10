@@ -85,7 +85,7 @@ module Cardano.Wallet.Primitive.Types
 
     -- * Token Bundles
     , TokenBundle (..)
-    , TokenCount (..)
+    , TokenQuantity (..)
     , TokenName (..)
     , TokenPolicyId (..)
     , mkTokenBundle
@@ -1288,7 +1288,7 @@ isValidCoin c = c >= minBound && c <= maxBound
 --------------------------------------------------------------------------------
 
 newtype TokenBundle = TokenBundle
-    { unTokenBundle :: Map TokenPolicyId (Map TokenName TokenCount) }
+    { unTokenBundle :: Map TokenPolicyId (Map TokenName TokenQuantity) }
     deriving stock (Eq, Generic)
     deriving Show via (Quiet TokenBundle)
 
@@ -1308,14 +1308,14 @@ instance NFData TokenBundle
 instance PartialOrd TokenBundle where
     a `leq` b = all policyCovered (tokenBundleToList a)
       where
-        policyCovered :: (TokenPolicyId, [(TokenName, TokenCount)]) -> Bool
-        policyCovered (policyId, tokenCounts) =
-            all (uncurry $ tokenCovered policyId) tokenCounts
-        tokenCovered :: TokenPolicyId -> TokenName -> TokenCount -> Bool
-        tokenCovered policyId tokenName tokenCount =
+        policyCovered :: (TokenPolicyId, [(TokenName, TokenQuantity)]) -> Bool
+        policyCovered (policyId, tokenQuantities) =
+            all (uncurry $ tokenCovered policyId) tokenQuantities
+        tokenCovered :: TokenPolicyId -> TokenName -> TokenQuantity -> Bool
+        tokenCovered policyId tokenName tokenQuantity =
             case tokenBundleLookup b policyId tokenName of
                 Nothing -> False
-                Just tokenCount' -> tokenCount <= tokenCount'
+                Just tokenQuantity' -> tokenQuantity <= tokenQuantity'
 
 instance Semigroup TokenBundle where
     TokenBundle a <> TokenBundle b = TokenBundle $
@@ -1331,38 +1331,38 @@ instance Buildable TokenBundle where
             [ ("token-bundle",
                 buildList buildOuterElement b)
             ]
-        buildOuterElement (tokenPolicyId, assetMap) = buildMap
-            [ ("token-policy-id",
-                build tokenPolicyId)
+        buildOuterElement (policyId, assetMap) = buildMap
+            [ ("policy",
+                build policyId)
             , ("tokens",
                 buildList buildInnerElement assetMap)
             ]
-        buildInnerElement (tokenName, tokenCount) = buildMap
-            [ ("token-name",
+        buildInnerElement (tokenName, tokenQuantity) = buildMap
+            [ ("name",
                 build tokenName)
-            , ("token-count",
-                build tokenCount)
+            , ("quantity",
+                build tokenQuantity)
             ]
         buildList buildElement =
             blockListF' "-" buildElement . Map.toList
         buildMap =
             blockMapF . fmap (first $ id @String)
 
-mkTokenBundle :: TokenPolicyId -> TokenName -> TokenCount -> TokenBundle
-mkTokenBundle tpid tokenName tokenCount =
-    tokenBundleFromList [(tpid, (tokenName, tokenCount) :| [])]
+mkTokenBundle :: TokenPolicyId -> TokenName -> TokenQuantity -> TokenBundle
+mkTokenBundle tpid tokenName tokenQuantity =
+    tokenBundleFromList [(tpid, (tokenName, tokenQuantity) :| [])]
 
 tokenBundleFromList
-    :: [(TokenPolicyId, NonEmpty (TokenName, TokenCount))] -> TokenBundle
+    :: [(TokenPolicyId, NonEmpty (TokenName, TokenQuantity))] -> TokenBundle
 tokenBundleFromList =
     TokenBundle . Map.fromList . fmap (fmap (Map.fromList . NE.toList))
 
 tokenBundleToList
-    :: TokenBundle -> [(TokenPolicyId, [(TokenName, TokenCount)])]
+    :: TokenBundle -> [(TokenPolicyId, [(TokenName, TokenQuantity)])]
 tokenBundleToList = fmap (fmap Map.toList) . Map.toList . unTokenBundle
 
 tokenBundleLookup
-    :: TokenBundle -> TokenPolicyId -> TokenName -> Maybe TokenCount
+    :: TokenBundle -> TokenPolicyId -> TokenName -> Maybe TokenQuantity
 tokenBundleLookup (TokenBundle bundle) policyId tokenName = do
     innerMap <- Map.lookup policyId bundle
     Map.lookup tokenName innerMap
@@ -1371,24 +1371,24 @@ tokenBundleLookup (TokenBundle bundle) policyId tokenName = do
 -- Token Counts
 --------------------------------------------------------------------------------
 
-newtype TokenCount = TokenCount
-    { unTokenCount :: Natural }
+newtype TokenQuantity = TokenQuantity
+    { unTokenQuantity :: Natural }
     deriving stock (Eq, Ord, Generic)
-    deriving (Read, Show) via (Quiet TokenCount)
+    deriving (Read, Show) via (Quiet TokenQuantity)
 
-instance NFData TokenCount
+instance NFData TokenQuantity
 
-instance Semigroup TokenCount where
-    TokenCount x <> TokenCount y = TokenCount $ x + y
+instance Semigroup TokenQuantity where
+    TokenQuantity x <> TokenQuantity y = TokenQuantity $ x + y
 
-instance Buildable TokenCount where
-    build = build . toText . unTokenCount
+instance Buildable TokenQuantity where
+    build = build . toText . unTokenQuantity
 
-instance ToText TokenCount where
-    toText = toText . unTokenCount
+instance ToText TokenQuantity where
+    toText = toText . unTokenQuantity
 
-instance FromText TokenCount where
-    fromText = fmap (TokenCount . fromIntegral @Natural) . fromText
+instance FromText TokenQuantity where
+    fromText = fmap (TokenQuantity . fromIntegral @Natural) . fromText
 
 --------------------------------------------------------------------------------
 -- Token Names

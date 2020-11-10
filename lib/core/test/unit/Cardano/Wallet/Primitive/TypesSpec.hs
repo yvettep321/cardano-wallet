@@ -78,7 +78,7 @@ import Cardano.Wallet.Primitive.Types
     , SlotNo (..)
     , StartTime (..)
     , TokenBundle (..)
-    , TokenCount (..)
+    , TokenQuantity (..)
     , TokenName (..)
     , TokenPolicyId (..)
     , Tx (..)
@@ -237,7 +237,7 @@ spec = do
             , semigroupLaws
             , semigroupMonoidLaws
             ]
-        testLawsMany @TokenCount
+        testLawsMany @TokenQuantity
             [ eqLaws
             , ordLaws
             , showReadLaws
@@ -276,7 +276,7 @@ spec = do
         textRoundtrip $ Proxy @SyncTolerance
         textRoundtrip $ Proxy @PoolId
         textRoundtrip $ Proxy @PoolOwner
-        textRoundtrip $ Proxy @TokenCount
+        textRoundtrip $ Proxy @TokenQuantity
         textRoundtrip $ Proxy @TokenName
         textRoundtrip $ Proxy @TokenPolicyId
 
@@ -1478,9 +1478,9 @@ instance Arbitrary TokenBundle where
     arbitrary = genericArbitrary
     shrink = genericShrink
 
-instance Arbitrary TokenCount where
-    arbitrary = TokenCount . fromIntegral @Integer <$> choose (0, 1000)
-    shrink (TokenCount c) = TokenCount <$> shrinkIntegral c
+instance Arbitrary TokenQuantity where
+    arbitrary = TokenQuantity . fromIntegral @Integer <$> choose (0, 1000)
+    shrink (TokenQuantity c) = TokenQuantity <$> shrinkIntegral c
 
 instance Arbitrary TokenName where
     arbitrary = TokenName .T.pack  <$> replicateM 8 (choose ('A', 'Z'))

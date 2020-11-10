@@ -51,7 +51,7 @@ import Cardano.Wallet.Primitive.Types
     , StakePoolMetadataHash (..)
     , StakePoolMetadataUrl (..)
     , StakePoolTicker
-    , TokenCount (..)
+    , TokenQuantity (..)
     , TokenName (..)
     , TokenPolicyId (..)
     , TxMetadata
@@ -263,11 +263,11 @@ instance PathPiece TxId where
 -- Token Bundles
 --------------------------------------------------------------------------------
 
-instance PersistField TokenCount where
+instance PersistField TokenQuantity where
     toPersistValue = toPersistValue . toText
     fromPersistValue = fromPersistValueFromText
 
-instance PersistFieldSql TokenCount where
+instance PersistFieldSql TokenQuantity where
     sqlType _ = sqlType (Proxy @Text)
 
 instance PersistField TokenName where
