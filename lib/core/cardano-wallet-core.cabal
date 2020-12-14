@@ -167,6 +167,7 @@ library
       Cardano.Wallet.Primitive.SyncProgress
       Cardano.Wallet.Primitive.CoinSelection.LargestFirst
       Cardano.Wallet.Primitive.CoinSelection.Migration
+      Cardano.Wallet.Primitive.CoinSelection.MultiAsset
       Cardano.Wallet.Primitive.CoinSelection.Random
       Cardano.Wallet.Primitive.Fee
       Cardano.Wallet.Primitive.Model
@@ -340,6 +341,7 @@ test-suite unit
       Cardano.Wallet.Primitive.AddressDiscoverySpec
       Cardano.Wallet.Primitive.CoinSelection.LargestFirstSpec
       Cardano.Wallet.Primitive.CoinSelection.MigrationSpec
+      Cardano.Wallet.Primitive.CoinSelection.MultiAssetSpec
       Cardano.Wallet.Primitive.CoinSelection.RandomSpec
       Cardano.Wallet.Primitive.CoinSelectionSpec
       Cardano.Wallet.Primitive.FeeSpec
