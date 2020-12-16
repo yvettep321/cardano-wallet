@@ -8,6 +8,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -57,6 +58,7 @@ module Cardano.Wallet.Shelley.Compatibility
     , toCardanoTxIn
     , toShelleyTxOut
     , toAllegraTxOut
+    , toMaryTxOut
     , toCardanoLovelace
     , sealShelleyTx
     , toStakeKeyRegCert
@@ -99,6 +101,8 @@ module Cardano.Wallet.Shelley.Compatibility
     , fromShelleyBlock
     , fromAllegraBlock
     , slottingParametersFromGenesis
+    , fromMaryBlock
+    , fromMaryTx
 
       -- * Internal Conversions
     , decentralizationLevelFromPParams
@@ -257,6 +261,7 @@ import qualified Cardano.Byron.Codec.Cbor as CBOR
 import qualified Cardano.Chain.Common as Byron
 import qualified Cardano.Ledger.Core as SL.Core
 import qualified Cardano.Ledger.Crypto as SL
+import qualified Cardano.Ledger.Mary.Value as Mary
 import qualified Cardano.Ledger.Shelley as SL
 import qualified Cardano.Ledger.Shelley.Constraints as SL
 import qualified Cardano.Ledger.ShelleyMA as MA
@@ -440,8 +445,8 @@ fromCardanoBlock gp = \case
         fst $ fromShelleyBlock gp blk
     BlockAllegra blk ->
         fst $ fromAllegraBlock gp blk
-    BlockMary _blk ->
-        error "TODO: fromCardanoBlock, BlockMary"
+    BlockMary blk ->
+        fst $ fromMaryBlock gp blk
 
 toCardanoEra :: CardanoBlock c -> AnyCardanoEra
 toCardanoEra = \case
@@ -475,6 +480,24 @@ fromAllegraBlock
 fromAllegraBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
     let
        (txs, dlgCerts, poolCerts) = unzip3 $ map fromAllegraTx $ toList txs'
+    in
+        ( W.Block
+            { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
+            , transactions = txs
+            , delegations  = mconcat dlgCerts
+            }
+        , mconcat poolCerts
+        )
+
+
+fromMaryBlock
+    :: forall c. (SL.Crypto c)
+    => W.GenesisParameters
+    -> ShelleyBlock (MA.ShelleyMAEra 'MA.Mary c)
+    -> (W.Block, [W.PoolCertificate])
+fromMaryBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
+    let
+       (txs, dlgCerts, poolCerts) = unzip3 $ map fromMaryTx $ toList txs'
     in
         ( W.Block
             { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
@@ -837,6 +860,54 @@ fromAllegraTx tx =
     -- multisig/script balance reporting.
     toSLMetadata (MA.Metadata blob _scripts) = SL.MetaData blob
 
+
+fromMaryTx
+    :: ( SL.ShelleyBased era
+       , SL.Core.TxBody era ~ MA.TxBody era
+       , SL.Core.Value era ~ Mary.Value era
+       , SL.Core.Metadata era ~ MA.Metadata era
+       , Ord (SL.Core.Script era)
+       )
+    => SL.Tx era
+    -> ( W.Tx
+       , [W.DelegationCertificate]
+       , [W.PoolCertificate]
+       )
+fromMaryTx tx =
+    ( W.Tx
+        (fromShelleyTxId $ SL.txid bod)
+        (map ((,W.Coin 0) . fromShelleyTxIn) (toList ins))
+        (map fromMaryTxOut (toList outs))
+        (fromShelleyWdrl wdrls)
+        (fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mmd)
+    , mapMaybe fromShelleyDelegationCert (toList certs)
+    , mapMaybe fromShelleyRegistrationCert (toList certs)
+    )
+  where
+    SL.Tx bod@(MA.TxBody ins outs certs wdrls _ _ _ _ _) _ mmd = tx
+
+    -- FIXME (ADP-525): It is fine for now since we do not look at script
+    -- pre-images. But this is precisely what we want as part of the
+    -- multisig/script balance reporting.
+    toSLMetadata (MA.Metadata blob _scripts) = SL.MetaData blob
+
+
+    fromMaryTxOut
+         :: ( SL.ShelleyBased era
+            , SL.Core.Value era ~ Mary.Value era
+            )
+         => SL.TxOut era
+         -> W.TxOut
+    fromMaryTxOut (SL.TxOut addr value) =
+       W.TxOut (fromShelleyAddress addr) (adaFromMaryValue value)
+
+      where
+        adaFromMaryValue (Mary.Value ada _assets) = W.Coin $ unsafeCast ada
+
+        -- TODO: We should check for overflow!
+        unsafeCast :: Integer -> Word64
+        unsafeCast = fromIntegral
+
 fromShelleyWdrl :: SL.Wdrl crypto -> Map W.RewardAccount W.Coin
 fromShelleyWdrl (SL.Wdrl wdrl) = Map.fromList $
     bimap (fromStakeCredential . SL.getRwdCred) fromShelleyCoin
@@ -1032,6 +1103,22 @@ toAllegraTxOut (W.TxOut (W.Address addr) coin) =
     addrInEra = fromMaybe (error "toCardanoTxOut: malformed address") $
         asum
         [ Cardano.AddressInEra (Cardano.ShelleyAddressInEra Cardano.ShelleyBasedEraAllegra)
+            <$> deserialiseFromRawBytes AsShelleyAddress addr
+
+        , Cardano.AddressInEra Cardano.ByronAddressInAnyEra
+            <$> deserialiseFromRawBytes AsByronAddress addr
+        ]
+
+
+-- TODO: Why does the compiled complain when I write MaryEra here?
+toMaryTxOut :: W.TxOut -> Cardano.TxOut _
+toMaryTxOut (W.TxOut (W.Address addr) coin) =
+    Cardano.TxOut addrInEra (adaOnly $ Cardano.lovelaceToValue $ toCardanoLovelace coin)
+  where
+    adaOnly = Cardano.TxOutValue Cardano.MultiAssetInMaryEra
+    addrInEra = fromMaybe (error "toCardanoTxOut: malformed address") $
+        asum
+        [ Cardano.AddressInEra (Cardano.ShelleyAddressInEra Cardano.ShelleyBasedEraMary)
             <$> deserialiseFromRawBytes AsShelleyAddress addr
 
         , Cardano.AddressInEra Cardano.ByronAddressInAnyEra

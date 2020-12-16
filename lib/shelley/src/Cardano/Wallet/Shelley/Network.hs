@@ -482,8 +482,12 @@ withNetworkLayer tr np addrInfo (versionData, _) action = do
                     SubmitSuccess -> pure ()
                     SubmitFail err -> throwE $ ErrPostTxBadRequest $ T.pack (show err)
 
-            AnyCardanoEra MaryEra ->
-                throwE $ ErrPostTxProtocolFailure "Invalid era: Mary"
+            AnyCardanoEra MaryEra -> do
+                let cmd = CmdSubmitTx $ unsealShelleyTx GenTxMary tx
+                result <- liftIO $ localTxSubmissionQ `send` cmd
+                case result of
+                    SubmitSuccess -> pure ()
+                    SubmitFail err -> throwE $ ErrPostTxBadRequest $ T.pack (show err)
 
     _stakeDistribution queue eraVar bh coin = do
         liftIO $ traceWith tr $ MsgWillQueryRewardsForStake coin
@@ -927,9 +931,11 @@ newRewardBalanceFetcher tr gp queryRewardQ =
                 res <- liftIO . timeQryAndLog loggerName tr $ queryRewardQ `send` cmd
                 handleQueryResult defaultValue res
             AnyCardanoEra MaryEra -> do
-                let msg = MsgLocalStateQueryError DelegationRewardsClient "MaryEra Not implemented"
-                liftIO $ traceWith tr msg
-                return Nothing
+                let creds = Set.map toStakeCredential accounts
+                let q = QueryIfCurrentMary (Shelley.GetFilteredDelegationsAndRewardAccounts creds)
+                let cmd = CmdQueryLocalState (getTipPoint tip) q
+                res <- liftIO . timeQryAndLog loggerName tr $ queryRewardQ `send` cmd
+                handleQueryResult defaultValue res
       where
         defaultValue :: Map W.RewardAccount W.Coin
         defaultValue = Map.fromList . map (, minBound) $ Set.toList accounts

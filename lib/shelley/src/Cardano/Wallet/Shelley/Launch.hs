@@ -652,7 +652,7 @@ withCluster tr severity poolConfigs dir logFile onByron onShelley onClusterStart
                     ("cluster didn't start correctly: " <> errors)
                     (ExitFailure 1)
             else do
-                waitForEpoch 3 "Allegra" tr ti
+                waitForEpoch 4 "Mary" tr ti
                 let cfg = NodeParams severity systemStart (port0, ports) logFile
                 withRelayNode tr dir cfg $ \socket -> do
                     let runningRelay = RunningNode socket block0 params
