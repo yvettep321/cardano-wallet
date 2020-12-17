@@ -353,7 +353,7 @@ mainnetVersionData =
         { networkMagic =
             NetworkMagic $ fromIntegral $ W.getProtocolMagic W.mainnetMagic
         }
-    , nodeToClientCodecCBORTerm NodeToClientV_5
+    , nodeToClientCodecCBORTerm NodeToClientV_6
     )
 
 -- | Settings for configuring a TestNet network client
@@ -365,7 +365,7 @@ testnetVersionData pm =
         { networkMagic =
             NetworkMagic $ fromIntegral $ W.getProtocolMagic pm
         }
-    , nodeToClientCodecCBORTerm NodeToClientV_5
+    , nodeToClientCodecCBORTerm NodeToClientV_6
     )
 
 --------------------------------------------------------------------------------

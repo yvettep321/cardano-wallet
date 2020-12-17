@@ -630,7 +630,7 @@ mkWalletClient tr cfg gp chainSyncQ = do
         , localStateQueryProtocol =
             doNothingProtocol
         })
-        NodeToClientV_5
+        NodeToClientV_6
   where
     tr' = contramap (mapChainSyncLog showB showP) tr
     showB = showP . blockPoint
@@ -668,7 +668,7 @@ mkDelegationRewardsClient tr cfg queryRewardQ =
                 $ localStateQueryClientPeer
                 $ localStateQuery queryRewardQ
         })
-        NodeToClientV_5
+        nodeToClientVersion
   where
     tr' = contramap (MsgLocalStateQuery DelegationRewardsClient) tr
     codec = cStateQueryCodec (serialisedCodecs cfg)
@@ -679,7 +679,7 @@ mkDelegationRewardsClient tr cfg queryRewardQ =
 
 -- | The protocol client version. Distinct from the codecs version.
 nodeToClientVersion :: NodeToClientVersion
-nodeToClientVersion = NodeToClientV_5
+nodeToClientVersion = NodeToClientV_6
 
 codecVersion :: BlockNodeToClientVersion (CardanoBlock StandardCrypto)
 codecVersion = verMap ! nodeToClientVersion
@@ -879,7 +879,7 @@ mkTipSyncClient tr np localTxSubmissionQ onTipUpdate onPParamsUpdate onInterpret
                 $ localStateQueryClientPeer
                 $ localStateQuery localStateQueryQ
         })
-        NodeToClientV_5
+        nodeToClientVersion
 
 -- Reward Account Balances
 
