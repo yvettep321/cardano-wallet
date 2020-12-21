@@ -1111,7 +1111,7 @@ toAllegraTxOut (W.TxOut (W.Address addr) coin) =
 
 
 -- TODO: Why does the compiled complain when I write MaryEra here?
-toMaryTxOut :: W.TxOut -> Cardano.TxOut _
+toMaryTxOut :: W.TxOut -> Cardano.TxOut Cardano.MaryEra
 toMaryTxOut (W.TxOut (W.Address addr) coin) =
     Cardano.TxOut addrInEra (adaOnly $ Cardano.lovelaceToValue $ toCardanoLovelace coin)
   where
