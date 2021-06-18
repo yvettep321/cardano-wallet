@@ -36,7 +36,7 @@ module Cardano.Wallet.Primitive.Delegation.State
     )
     where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Crypto.Wallet
     ( XPub )

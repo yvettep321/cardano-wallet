@@ -20,7 +20,7 @@ module Cardano.Wallet.Primitive.Migration
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Migration.Selection
     ( RewardWithdrawal (..), Selection (..) )

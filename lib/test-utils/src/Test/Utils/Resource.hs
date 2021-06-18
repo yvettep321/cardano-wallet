@@ -12,7 +12,7 @@ module Test.Utils.Resource
     ( unBracket
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad.IO.Unlift
     ( MonadUnliftIO )

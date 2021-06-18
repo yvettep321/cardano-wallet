@@ -119,7 +119,7 @@ module Cardano.Wallet.Shelley.Compatibility
     , interval1
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address
     ( unsafeMkAddress )
@@ -170,16 +170,10 @@ import Cardano.Wallet.Unsafe
     ( unsafeDeserialiseCbor, unsafeMkPercentage )
 import Codec.Binary.Bech32
     ( dataPartFromBytes, dataPartToBytes )
-import Control.Applicative
-    ( (<|>) )
 import Control.Arrow
     ( left )
-import Control.Monad
-    ( when, (>=>) )
 import Crypto.Hash.Utils
     ( blake2b224 )
-import Data.Bifunctor
-    ( bimap )
 import Data.Binary.Get
     ( runGetOrFail )
 import Data.Binary.Put
@@ -194,34 +188,18 @@ import Data.ByteString.Base58
     ( bitcoinAlphabet, decodeBase58, encodeBase58 )
 import Data.ByteString.Short
     ( fromShort, toShort )
-import Data.Coerce
-    ( coerce )
 import Data.Foldable
-    ( asum, toList )
+    ( asum )
 import Data.Map.Strict
     ( Map )
-import Data.Maybe
-    ( fromMaybe, isJust, mapMaybe )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Percentage, Quantity (..), mkPercentage )
-import Data.Text
-    ( Text )
 import Data.Text.Class
     ( TextDecodingError (..) )
-import Data.Word
-    ( Word16, Word32, Word64, Word8 )
-import Fmt
-    ( Buildable (..) )
 import GHC.Records
     ( HasField (..) )
-import GHC.Stack
-    ( HasCallStack )
 import GHC.TypeLits
     ( KnownNat, natVal )
-import Numeric.Natural
-    ( Natural )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras

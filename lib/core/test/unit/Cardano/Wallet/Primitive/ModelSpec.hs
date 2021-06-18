@@ -15,7 +15,7 @@ module Cardano.Wallet.Primitive.ModelSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.DummyTarget.Primitive.Types
     ( block0 )
@@ -67,38 +67,20 @@ import Cardano.Wallet.Primitive.Types.Tx
     )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( Dom (..), UTxO (..), balance, excluding, restrictedTo )
-import Control.DeepSeq
-    ( NFData (..) )
 import Control.Monad
-    ( foldM, guard )
+    ( foldM )
 import Control.Monad.Trans.State.Strict
     ( State, evalState, runState, state )
-import Data.Foldable
-    ( fold )
-import Data.Functor
-    ( ($>) )
-import Data.Generics.Internal.VL.Lens
-    ( view )
 import Data.Generics.Labels
     ()
 import Data.List
     ( elemIndex )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Data.Maybe
     ( catMaybes )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Set
     ( Set, (\\) )
-import Data.Traversable
-    ( for )
-import Data.Word
-    ( Word64 )
-import Fmt
-    ( Buildable, blockListF, pretty )
-import GHC.Generics
-    ( Generic )
 import Test.Hspec
     ( Spec, describe, it, shouldSatisfy )
 import Test.Hspec.Extra

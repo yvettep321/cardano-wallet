@@ -41,7 +41,7 @@ module Cardano.Byron.Codec.Cbor
     , decodeNestedBytes
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPub, xpubToBytes )

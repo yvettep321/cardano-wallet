@@ -18,7 +18,7 @@ module Test.Hspec.Extra
     , parallel
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( void )

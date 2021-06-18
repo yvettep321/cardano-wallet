@@ -7,7 +7,7 @@ module Cardano.LauncherSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Configuration.Model
     ( setMinSeverity )

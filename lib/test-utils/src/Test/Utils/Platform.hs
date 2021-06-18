@@ -24,10 +24,8 @@ module Test.Utils.Platform
     , nullFileName
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Control.Monad
-    ( when )
 import System.Exit
     ( ExitCode (..) )
 import System.Info
@@ -35,25 +33,25 @@ import System.Info
 import Test.Hspec.Core.Spec
     ( ResultStatus (..), pendingWith )
 import Test.Hspec.Expectations
-    ( Expectation, HasCallStack )
+    ( Expectation )
 import UnliftIO.Exception
-    ( IOException, handle, throwIO )
+    ( IOException, handle )
 import UnliftIO.Process
     ( readProcessWithExitCode )
 
-skipOnWindows :: HasCallStack => String -> Expectation
+skipOnWindows :: String -> Expectation
 skipOnWindows _reason = whenWindows $ throwIO Success
 
-pendingOnWindows :: HasCallStack => String -> Expectation
+pendingOnWindows :: String -> Expectation
 pendingOnWindows reason = whenWindows $ pendingWith reason
 
-pendingOnWine :: HasCallStack => String -> Expectation
+pendingOnWine :: String -> Expectation
 pendingOnWine reason = whenWindows $ do
     wine <- getIsWine
     when wine $ pendingWith reason
 
 -- | Mark test pending if running on macOS
-pendingOnMacOS :: HasCallStack => String -> Expectation
+pendingOnMacOS :: String -> Expectation
 pendingOnMacOS reason = when isMacOS $ pendingWith reason
 
 isWindows, isMacOS :: Bool

@@ -11,7 +11,7 @@ module Cardano.Startup.POSIX
     , killProcess
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( void )

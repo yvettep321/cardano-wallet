@@ -13,7 +13,7 @@ module Test.Utils.Laws
     , testLawsMany
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( forM_ )

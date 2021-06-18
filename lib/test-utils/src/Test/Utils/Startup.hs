@@ -3,7 +3,7 @@ module Test.Utils.Startup
     , withNoBuffering
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( void )

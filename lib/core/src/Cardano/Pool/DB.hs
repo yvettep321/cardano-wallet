@@ -21,7 +21,7 @@ module Cardano.Pool.DB
     , ErrPointAlreadyExists (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types
     ( BlockHeader

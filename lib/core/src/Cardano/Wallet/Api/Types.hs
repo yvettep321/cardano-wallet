@@ -227,7 +227,7 @@ module Cardano.Wallet.Api.Types
     , Base (Base16, Base64)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, XPub, xpubFromBytes, xpubToBytes )
@@ -316,13 +316,9 @@ import Codec.Binary.Bech32.TH
 import "cardano-addresses" Codec.Binary.Encoding
     ( AbstractEncoding (..), detectEncoding, encode, fromBase16 )
 import Control.Applicative
-    ( optional, (<|>) )
+    ( optional )
 import Control.Arrow
     ( left )
-import Control.DeepSeq
-    ( NFData (..) )
-import Control.Monad
-    ( guard, when, (>=>) )
 import Data.Aeson.Types
     ( FromJSON (..)
     , SumEncoding (..)
@@ -346,8 +342,6 @@ import Data.Aeson.Types
     , (.:?)
     , (.=)
     )
-import Data.Bifunctor
-    ( bimap, first )
 import Data.ByteArray
     ( ByteArray, ByteArrayAccess )
 import Data.ByteArray.Encoding
@@ -359,34 +353,22 @@ import Data.Data
 import Data.Either.Combinators
     ( maybeToRight )
 import Data.Either.Extra
-    ( eitherToMaybe, maybeToEither )
-import Data.Function
-    ( (&) )
-import Data.Generics.Internal.VL.Lens
-    ( view, (^.) )
+    ( maybeToEither )
 import Data.Hashable
     ( Hashable )
-import Data.Kind
-    ( Type )
 import Data.List
     ( intercalate )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Data.Map.Strict
     ( Map )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Percentage, Quantity (..) )
 import Data.String
     ( IsString )
 import Data.Text
-    ( Text, split )
+    ( split )
 import Data.Text.Class
     ( CaseStyle (..)
-    , FromText (..)
     , TextDecodingError (..)
-    , ToText (..)
     , fromTextToBoundedEnum
     , toTextFromBoundedEnum
     )
@@ -396,22 +378,14 @@ import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime, utcTimeToPOSIXSeconds )
 import Data.Time.Text
     ( iso8601, iso8601ExtendedUtc, utcTimeFromText, utcTimeToText )
-import Data.Traversable
-    ( for )
 import Data.Typeable
-    ( Typeable, typeRep )
+    ( typeRep )
 import Data.Word
-    ( Word16, Word32, Word64 )
+    ( Word16 )
 import Data.Word.Odd
     ( Word31 )
-import Fmt
-    ( pretty )
-import GHC.Generics
-    ( Generic )
 import GHC.TypeLits
     ( Nat, Symbol )
-import Numeric.Natural
-    ( Natural )
 import Quiet
     ( Quiet (..) )
 import Servant.API

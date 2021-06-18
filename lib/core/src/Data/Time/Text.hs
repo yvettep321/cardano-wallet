@@ -26,7 +26,7 @@ module Data.Time.Text
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Applicative
     ( (<|>) )

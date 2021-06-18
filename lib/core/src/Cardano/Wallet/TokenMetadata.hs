@@ -71,14 +71,17 @@ module Cardano.Wallet.TokenMetadata
     , metadataFromProperties
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation, HasSeverityAnnotation (..) )
 import Cardano.Wallet.Logging
-    ( BracketLog (..), LoggedException (..), bracketTracer, produceTimings )
+    ( BracketLog (..)
+    , HasPrivacyAnnotation
+    , HasSeverityAnnotation (..)
+    , LoggedException (..)
+    , Severity (..)
+    , bracketTracer
+    , produceTimings
+    )
 import Cardano.Wallet.Primitive.Types
     ( TokenMetadataServer (..) )
 import Cardano.Wallet.Primitive.Types.Hash
@@ -99,14 +102,8 @@ import Cardano.Wallet.Primitive.Types.TokenPolicy
     , validateMetadataTicker
     , validateMetadataURL
     )
-import Control.Applicative
-    ( (<|>) )
 import Control.DeepSeq
     ( NFData (..) )
-import Control.Monad
-    ( when, (>=>) )
-import Control.Tracer
-    ( Tracer, contramap, traceWith )
 import Data.Aeson
     ( FromJSON (..)
     , Object
@@ -122,34 +119,18 @@ import Data.Aeson
     )
 import Data.Aeson.Types
     ( Parser, fromJSON )
-import Data.Bifunctor
-    ( first )
 import Data.ByteArray.Encoding
     ( Base (Base16, Base64), convertFromBase, convertToBase )
 import Data.ByteString
     ( ByteString )
-import Data.Foldable
-    ( toList )
-import Data.Functor
-    ( ($>) )
 import Data.Hashable
     ( Hashable )
-import Data.Kind
-    ( Type )
 import Data.Maybe
-    ( catMaybes, mapMaybe )
-import Data.Proxy
-    ( Proxy (..) )
+    ( catMaybes )
 import Data.String
     ( IsString (..) )
-import Data.Text
-    ( Text )
-import Data.Text.Class
-    ( ToText (..) )
 import Data.Time.Clock
     ( DiffTime )
-import GHC.Generics
-    ( Generic )
 import GHC.TypeLits
     ( KnownSymbol, Symbol, symbolVal )
 import Network.HTTP.Client

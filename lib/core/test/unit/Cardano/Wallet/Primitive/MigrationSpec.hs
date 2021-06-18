@@ -4,7 +4,7 @@
 module Cardano.Wallet.Primitive.MigrationSpec
     where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Migration
     ( RewardWithdrawal (..), createPlan )

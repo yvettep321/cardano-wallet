@@ -11,7 +11,7 @@ module Cardano.Pool.DB.SqliteSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Trace
     ( nullTracer )

@@ -17,7 +17,7 @@ module Test.Integration.Scenario.API.Shelley.TransactionsNew
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Mnemonic
     ( mnemonicToText )
@@ -39,22 +39,10 @@ import Cardano.Wallet.Primitive.AddressDerivation.Icarus
     ( IcarusKey )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
-import Control.Monad.IO.Unlift
-    ( MonadIO (..), MonadUnliftIO (..), liftIO )
 import Control.Monad.Trans.Resource
     ( runResourceT )
-import Data.Generics.Internal.VL.Lens
-    ( view, (^.) )
-import Data.Maybe
-    ( isJust )
-import Data.Proxy
-    ( Proxy )
 import Data.Quantity
     ( Quantity (..) )
-import Data.Text
-    ( Text )
-import Numeric.Natural
-    ( Natural )
 import Test.Hspec
     ( SpecWith, describe, pendingWith )
 import Test.Hspec.Expectations.Lifted

@@ -30,7 +30,7 @@ module Cardano.Wallet.Version
     , showFullVersion
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Version.TH
     ( gitRevFromGit )

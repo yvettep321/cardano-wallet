@@ -30,7 +30,7 @@ module Cardano.Wallet.Primitive.AddressDiscovery
     , coinTypeAda
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Crypto.Wallet
     ( XPrv, XPub )

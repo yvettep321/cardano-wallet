@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -40,7 +41,6 @@ module Cardano.Wallet.Primitive.Types.TokenMap
     , AssetId (..)
 
     -- * Construction
-    , empty
     , singleton
     , fromFlatList
     , fromNestedList
@@ -89,12 +89,12 @@ module Cardano.Wallet.Primitive.Types.TokenMap
 
     ) where
 
-import Prelude hiding
+import Cardano.Wallet.Prelude hiding
     ( filter, subtract )
 
 import Algebra.PartialOrd
     ( PartialOrd (..) )
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( equipartitionNatural )
 import Cardano.Wallet.Primitive.Types.TokenPolicy
     ( TokenName, TokenPolicyId )
@@ -174,6 +174,7 @@ newtype TokenMap = TokenMap
         :: Map TokenPolicyId (NonEmptyMap TokenName TokenQuantity)
     }
     deriving stock (Eq, Generic)
+    deriving newtype Monoid
     deriving (Read, Show) via (Quiet TokenMap)
 
 -- | Token maps can be partially ordered, but there is no total ordering of
@@ -230,9 +231,6 @@ instance Hashable TokenMap where
 
 instance Semigroup TokenMap where
     (<>) = add
-
-instance Monoid TokenMap where
-    mempty = empty
 
 -- | A combination of a token policy identifier and a token name that can be
 --   used as a compound identifier.
@@ -425,18 +423,13 @@ instance ToJSON NestedTokenQuantity where
 -- Construction
 --------------------------------------------------------------------------------
 
--- | The empty token map.
---
-empty :: TokenMap
-empty = TokenMap mempty
-
 -- | Creates a singleton token map with just one token quantity.
 --
 -- If the specified token quantity is zero, then the resultant map will be
 -- equal to the 'empty' map.
 --
 singleton :: AssetId -> TokenQuantity -> TokenMap
-singleton = setQuantity empty
+singleton = setQuantity mempty
 
 -- | Creates a token map from a flat list.
 --
@@ -444,7 +437,7 @@ singleton = setQuantity empty
 -- its associated quantities will be added together in the resultant map.
 --
 fromFlatList :: [(AssetId, TokenQuantity)] -> TokenMap
-fromFlatList = F.foldl' acc empty
+fromFlatList = F.foldl' acc mempty
   where
     acc b (asset, quantity) = adjustQuantity b asset (<> quantity)
 
@@ -575,12 +568,12 @@ intersection m1 m2 =
 -- | Returns true if and only if the given map is empty.
 --
 isEmpty :: TokenMap -> Bool
-isEmpty = (== empty)
+isEmpty = (== mempty)
 
 -- | Returns true if and only if the given map is not empty.
 --
 isNotEmpty :: TokenMap -> Bool
-isNotEmpty = (/= empty)
+isNotEmpty = (/= mempty)
 
 --------------------------------------------------------------------------------
 -- Quantities
@@ -727,7 +720,7 @@ equipartitionQuantities
     -> NonEmpty TokenMap
     -- ^ The partitioned maps.
 equipartitionQuantities m count =
-    F.foldl' accumulate (empty <$ count) (toFlatList m)
+    F.foldl' accumulate (mempty <$ count) (toFlatList m)
   where
     accumulate
         :: NonEmpty TokenMap

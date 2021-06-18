@@ -17,7 +17,7 @@ module Cardano.Wallet.Shelley.TransactionSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, xprvFromBytes, xprvToBytes )
@@ -121,25 +121,19 @@ import Cardano.Wallet.Transaction
     , defaultTransactionCtx
     )
 import Control.Monad
-    ( forM_, replicateM )
+    ( replicateM )
 import Control.Monad.Trans.Except
     ( except, runExceptT )
-import Data.Function
-    ( on, (&) )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Data.Maybe
     ( fromJust )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Semigroup
     ( Sum (Sum), getSum, mtimesDefault )
 import Data.Typeable
-    ( Typeable, typeRep )
+    ( typeRep )
 import Data.Word
-    ( Word16, Word64, Word8 )
+    ( Word16 )
 import Ouroboros.Network.Block
     ( SlotNo (..) )
 import Test.Hspec
@@ -178,7 +172,6 @@ import Test.QuickCheck.Random
 
 import qualified Cardano.Api as Cardano
 import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TokenBundle
-import qualified Cardano.Wallet.Primitive.Types.UTxOIndex as UTxOIndex
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as B8
@@ -409,7 +402,7 @@ spec = do
                       , extraCoinSource = Nothing
                       , outputsCovered = outs
                       , changeGenerated = chgs
-                      , utxoRemaining = UTxOIndex.empty
+                      , utxoRemaining = mempty
                       }
                   inps = Map.toList $ getUTxO utxo
         it "1 input, 2 outputs" $ do
@@ -503,7 +496,7 @@ spec = do
                     , extraCoinSource = Nothing
                     , outputsCovered = outs
                     , changeGenerated = chgs
-                    , utxoRemaining = UTxOIndex.empty
+                    , utxoRemaining = mempty
                     }
                   inps = Map.toList $ getUTxO utxo
         it "1 input, 2 outputs" $ do
@@ -622,7 +615,7 @@ estimateMaxInputsTests cases = do
             (prop_biggerMaxSizeMeansMoreInputs @k)
 
 prop_decodeSignedShelleyTxRoundtrip
-    :: forall era. (Cardano.IsCardanoEra era, Cardano.IsShelleyBasedEra era)
+    :: forall era. Cardano.IsShelleyBasedEra era
     => Cardano.ShelleyBasedEra era
     -> DecodeShelleySetup
     -> Property
@@ -649,7 +642,7 @@ prop_decodeSignedShelleyTxRoundtrip shelleyEra (DecodeShelleySetup utxo outs md 
         , extraCoinSource = Nothing
         , outputsCovered = []
         , changeGenerated = outs
-        , utxoRemaining = UTxOIndex.empty
+        , utxoRemaining = mempty
         }
 
 prop_decodeSignedByronTxRoundtrip
@@ -675,7 +668,7 @@ prop_decodeSignedByronTxRoundtrip (DecodeByronSetup utxo outs slotNo ntwrk pairs
         , extraCoinSource = Nothing
         , outputsCovered = []
         , changeGenerated = outs
-        , utxoRemaining = UTxOIndex.empty
+        , utxoRemaining = mempty
         }
 
 -- | Increasing the number of outputs reduces the number of inputs.

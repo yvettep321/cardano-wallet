@@ -8,7 +8,7 @@ module Cardano.Wallet.Shelley.Compatibility.LedgerSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types
     ( MinimumUTxOValue (..) )
@@ -206,7 +206,7 @@ unit_computeMinimumAdaQuantity_fixedSizeBundle bundle expectation =
 
 unit_computeMinimumAdaQuantity_emptyBundle :: Property
 unit_computeMinimumAdaQuantity_emptyBundle =
-    unit_computeMinimumAdaQuantity_fixedSizeBundle TokenBundle.empty $
+    unit_computeMinimumAdaQuantity_fixedSizeBundle mempty $
         Coin 1000000
 
 unit_computeMinimumAdaQuantity_fixedSizeBundle_8

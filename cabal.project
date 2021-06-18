@@ -2,7 +2,8 @@ index-state: 2021-06-30T00:00:00Z
 with-compiler: ghc-8.10.5
 
 packages:
-    lib/core/
+    lib/base/
+  , lib/core/
   , lib/core-integration/
   , lib/cli/
   , lib/launcher/
@@ -199,7 +200,7 @@ package cardano-wallet-text-class
   tests: True
   ghc-options: -fwrite-ide-info
 
-package cardano-numeric
+package cardano-wallet-numeric
   tests: True
   ghc-options: -fwrite-ide-info
 

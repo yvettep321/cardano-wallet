@@ -26,7 +26,7 @@ module Cardano.Wallet.BenchShared
     , Time
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Configuration.Static
     ( defaultConfigStdout )

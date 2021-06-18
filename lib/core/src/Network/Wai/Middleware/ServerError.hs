@@ -11,7 +11,7 @@ module Network.Wai.Middleware.ServerError
     ( handleRawError
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( guard )

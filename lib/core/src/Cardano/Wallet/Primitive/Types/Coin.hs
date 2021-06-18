@@ -33,9 +33,9 @@ module Cardano.Wallet.Primitive.Types.Coin
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( equipartitionNatural, partitionNatural )
 import Control.DeepSeq
     ( NFData (..) )

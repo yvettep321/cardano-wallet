@@ -11,11 +11,11 @@ module Cardano.Wallet.Primitive.Types.TokenMapSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Algebra.PartialOrd
     ( PartialOrd (..) )
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( inAscendingPartialOrder )
 import Cardano.Wallet.Primitive.Types.TokenMap
     ( AssetId (..), Flat (..), Nested (..), TokenMap, difference )
@@ -313,7 +313,7 @@ prop_shrink_invariant :: TokenMap -> Property
 prop_shrink_invariant b = property $ all invariantHolds $ shrink b
 
 prop_empty_invariant :: Property
-prop_empty_invariant = property $ invariantHolds TokenMap.empty
+prop_empty_invariant = property $ invariantHolds mempty
 
 prop_singleton_invariant :: (AssetId, TokenQuantity) -> Property
 prop_singleton_invariant (asset, quantity) = property $
@@ -401,7 +401,7 @@ prop_fromNestedList assetQuantities = checkCoverage $ property $
 
 prop_empty_toFlatList :: Property
 prop_empty_toFlatList =
-    TokenMap.toFlatList TokenMap.empty === []
+    TokenMap.toFlatList mempty === []
 
 prop_singleton_toFlatList
     :: (AssetId, TokenQuantity) -> Property
@@ -472,7 +472,7 @@ prop_add_subtract_associative m1 m2 m3 =
 
 prop_subtract_null :: TokenMap -> Property
 prop_subtract_null m =
-    m `TokenMap.subtract` m === Just TokenMap.empty
+    m `TokenMap.subtract` m === Just mempty
 
 prop_difference_zero :: TokenMap -> Property
 prop_difference_zero x =
@@ -562,7 +562,7 @@ prop_intersection_empty x =
     checkCoverage $
     cover 50 (TokenMap.isNotEmpty x)
         "map is not empty" $
-    x `TokenMap.intersection` TokenMap.empty === TokenMap.empty
+    x `TokenMap.intersection` mempty === mempty
 
 prop_intersection_equality :: Property
 prop_intersection_equality =
@@ -619,7 +619,7 @@ prop_intersection_subset =
 
 prop_removeQuantity_isEmpty :: TokenMap -> Property
 prop_removeQuantity_isEmpty b =
-    F.foldl' TokenMap.removeQuantity b assets === TokenMap.empty
+    F.foldl' TokenMap.removeQuantity b assets === mempty
   where
     assets = fst <$> TokenMap.toFlatList b
 

@@ -8,7 +8,7 @@ module Test.Integration.Scenario.API.Shelley.Network
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Api.Types
     ( ApiEpochInfo, ApiEra (..), ApiNetworkParameters (..) )

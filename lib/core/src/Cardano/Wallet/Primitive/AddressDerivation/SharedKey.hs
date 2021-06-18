@@ -28,7 +28,7 @@ module Cardano.Wallet.Primitive.AddressDerivation.SharedKey
     , replaceCosignersWithVerKeys
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Script
     ( Cosigner, KeyHash, Script (..), ScriptTemplate (..), toScriptHash )

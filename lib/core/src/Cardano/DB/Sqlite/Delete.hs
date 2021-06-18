@@ -28,12 +28,10 @@ module Cardano.DB.Sqlite.Delete
     , waitForFreeRetryPolicy
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
+import Cardano.Wallet.Logging
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..), Severity (..) )
 import Control.Retry
     ( RetryPolicy
     , RetryStatus (..)

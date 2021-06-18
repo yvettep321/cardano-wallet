@@ -39,14 +39,12 @@ module Cardano.Pool.Metadata
     , SMASHPoolId (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Wallet.Api.Types
     ( HealthCheckSMASH (..), HealthStatusSMASH (..), defaultRecordTypeOptions )
+import Cardano.Wallet.Logging
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..), Severity (..) )
 import Cardano.Wallet.Primitive.AddressDerivation
     ( hex )
 import Cardano.Wallet.Primitive.Types
@@ -56,14 +54,8 @@ import Cardano.Wallet.Primitive.Types
     , StakePoolMetadataUrl (..)
     , decodePoolIdBech32
     )
-import Control.Monad
-    ( forM, when )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
 import Control.Monad.Trans.Except
     ( ExceptT (..), except, runExceptT, throwE, withExceptT )
-import Control.Tracer
-    ( Tracer, traceWith )
 import Crypto.Hash.Utils
     ( blake2b256 )
 import Data.Aeson
@@ -76,22 +68,14 @@ import Data.Aeson
     , parseJSON
     , toJSON
     )
-import Data.Bifunctor
-    ( first )
 import Data.ByteArray.Encoding
     ( Base (..), convertToBase )
 import Data.ByteString
     ( ByteString )
-import Data.Coerce
-    ( coerce )
 import Data.List
     ( intercalate )
 import Data.Text.Class
-    ( TextDecodingError (..), ToText (..), fromText )
-import Fmt
-    ( pretty )
-import GHC.Generics
-    ( Generic )
+    ( TextDecodingError (..) )
 import Network.HTTP.Client
     ( HttpException (..)
     , Manager

@@ -5,7 +5,7 @@ module Test.Utils.Roundtrip
     , httpApiDataRoundtrip
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )

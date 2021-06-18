@@ -21,7 +21,7 @@
 
 module Cardano.Wallet.DB.Sqlite.Types where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Script
     ( Cosigner, Script, ScriptHash (..) )
@@ -74,49 +74,30 @@ import Cardano.Wallet.Primitive.Types.Tx
     ( Direction (..), SealedTx (..), TxMetadata, TxStatus (..) )
 import Control.Arrow
     ( left )
-import Control.Monad
-    ( (<=<), (>=>) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), Value (..), withText )
 import Data.Aeson.Types
     ( Parser )
-import Data.Bifunctor
-    ( bimap, first )
 import Data.ByteArray.Encoding
     ( Base (..), convertFromBase, convertToBase )
 import Data.ByteString
     ( ByteString )
-import Data.Maybe
-    ( mapMaybe )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Percentage )
-import Data.Text
-    ( Text )
 import Data.Text.Class
-    ( FromText (..)
-    , TextDecodingError (..)
-    , ToText (..)
-    , fromTextMaybe
-    , getTextDecodingError
-    )
+    ( TextDecodingError (..), fromTextMaybe, getTextDecodingError )
 import Data.Text.Encoding
     ( decodeUtf8, encodeUtf8 )
 import Data.Time.Clock.POSIX
     ( POSIXTime, posixSecondsToUTCTime, utcTimeToPOSIXSeconds )
 import Data.Time.Format
     ( defaultTimeLocale, formatTime, iso8601DateFormat, parseTimeM )
-import Data.Word
-    ( Word32, Word64 )
 import Data.Word.Odd
     ( Word31 )
 import Database.Persist.Sqlite
     ( PersistField (..), PersistFieldSql (..), PersistValue (..) )
 import Database.Persist.TH
     ( MkPersistSettings (..), sqlSettings )
-import GHC.Generics
-    ( Generic )
 import Network.URI
     ( parseAbsoluteURI )
 import System.Random.Internal

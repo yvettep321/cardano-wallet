@@ -15,7 +15,7 @@ module Cardano.Wallet.LatencyBenchShared
   , fmtTitle
   ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Backend.Switchboard
     ( effectuate )

@@ -11,14 +11,12 @@ module Cardano.StartupSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Startup
     ( ShutdownHandlerLog (..), withShutdownHandler' )
-import Control.Monad
-    ( unless )
 import Control.Tracer
-    ( Tracer, nullTracer )
+    ( nullTracer )
 import System.IO
     ( Handle, IOMode (..), hClose, hWaitForInput, stdin, withFile )
 import System.IO.Error
@@ -28,7 +26,7 @@ import Test.Hspec
 import Test.Hspec.Core.Spec
     ( ResultStatus (..) )
 import Test.Hspec.Expectations
-    ( Expectation, HasCallStack )
+    ( Expectation )
 import Test.Utils.Platform
     ( nullFileName, pendingOnWindows )
 import Test.Utils.Trace
@@ -38,7 +36,7 @@ import UnliftIO.Async
 import UnliftIO.Concurrent
     ( threadDelay )
 import UnliftIO.Exception
-    ( IOException, bracket, catch, throwIO )
+    ( IOException, bracket, catch )
 import UnliftIO.Process
     ( createPipe )
 
@@ -173,7 +171,7 @@ wrapIO = id
 #endif
 
 -- | Detect environment where 'stdin' is set to =/dev/null= and skip test.
-skipWhenNullStdin :: HasCallStack => Expectation
+skipWhenNullStdin :: Expectation
 skipWhenNullStdin = do
     let onError :: IOException -> IO Bool
         onError _ = pure False

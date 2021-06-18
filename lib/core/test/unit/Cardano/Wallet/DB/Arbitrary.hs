@@ -27,7 +27,7 @@ module Cardano.Wallet.DB.Arbitrary
     , InitialCheckpoint (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, XPub )
@@ -133,40 +133,24 @@ import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..) )
 import Cardano.Wallet.Unsafe
     ( someDummyMnemonic, unsafeMkPercentage )
-import Control.Arrow
-    ( second )
-import Control.DeepSeq
-    ( NFData )
 import Crypto.Hash
     ( hash )
 import Data.ByteArray.Encoding
     ( Base (Base16), convertToBase )
-import Data.Coerce
-    ( coerce )
 import Data.Functor.Identity
     ( Identity (..) )
-import Data.Generics.Internal.VL.Lens
-    ( view, (^.) )
 import Data.Generics.Labels
     ()
 import Data.List
     ( unfoldr )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Percentage (..), Quantity (..) )
 import Data.Ratio
     ( (%) )
-import Data.Text.Class
-    ( toText )
-import Data.Word
-    ( Word32 )
 import Data.Word.Odd
     ( Word31 )
 import Fmt
-    ( Buildable (..), Builder, blockListF', prefixF, suffixF, tupleF )
-import GHC.Generics
-    ( Generic )
+    ( Builder, blockListF', prefixF, suffixF, tupleF )
 import System.IO.Unsafe
     ( unsafePerformIO )
 import System.Random

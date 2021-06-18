@@ -16,11 +16,11 @@ module Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobinSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Algebra.PartialOrd
     ( PartialOrd (..) )
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( inAscendingPartialOrder )
 import Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
     ( AssetCount (..)
@@ -51,7 +51,7 @@ import Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
     , makeChangeForNonUserSpecifiedAsset
     , makeChangeForNonUserSpecifiedAssets
     , makeChangeForUserSpecifiedAsset
-    , mapMaybe
+    , mapMaybeNE
     , missingOutputAssets
     , performSelection
     , prepareOutputsWith
@@ -114,39 +114,21 @@ import Cardano.Wallet.Primitive.Types.UTxOIndex.Gen
     , shrinkUTxOIndexSmall
     )
 import Control.Monad
-    ( forM_, replicateM )
-import Data.Bifunctor
-    ( bimap, second )
+    ( replicateM )
 import Data.ByteString
     ( ByteString )
-import Data.Function
-    ( on, (&) )
 import Data.Functor.Identity
     ( Identity (..) )
-import Data.Generics.Internal.VL.Lens
-    ( view )
 import Data.Generics.Labels
     ()
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Data.Map.Strict
     ( Map )
-import Data.Maybe
-    ( isJust )
 import Data.Semigroup
     ( mtimesDefault )
 import Data.Set
     ( Set )
 import Data.Tuple
     ( swap )
-import Data.Word
-    ( Word64, Word8 )
-import Fmt
-    ( blockListF, pretty )
-import GHC.Generics
-    ( Generic )
-import Numeric.Natural
-    ( Natural )
 import Safe
     ( tailMay )
 import Test.Hspec
@@ -204,7 +186,6 @@ import qualified Data.Foldable as F
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as Map
-import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 
 spec :: Spec
@@ -708,13 +689,13 @@ prop_performSelection_small minCoinValueFor costFor (Blind (Small criteria)) =
         "Assets to cover, but no assets in UTxO" $
 
     -- Inspect the sets of minted and burned assets:
-    cover 20 (view #assetsToMint criteria /= TokenMap.empty)
+    cover 20 (view #assetsToMint criteria /= mempty)
         "Have some assets to mint" $
-    cover 20 (view #assetsToBurn criteria /= TokenMap.empty)
+    cover 20 (view #assetsToBurn criteria /= mempty)
         "Have some assets to burn" $
-    cover 2 (view #assetsToMint criteria == TokenMap.empty)
+    cover 2 (view #assetsToMint criteria == mempty)
         "Have no assets to mint" $
-    cover 2 (view #assetsToBurn criteria == TokenMap.empty)
+    cover 2 (view #assetsToBurn criteria == mempty)
         "Have no assets to burn" $
 
     -- Inspect the intersection between minted assets and burned assets:
@@ -908,7 +889,7 @@ prop_performSelection minCoinValueFor costFor (Blind criteria) coverage =
             NoLimit ->
                 assert True
       where
-        absoluteMinCoinValue = mkMinCoinValueFor minCoinValueFor TokenMap.empty
+        absoluteMinCoinValue = mkMinCoinValueFor minCoinValueFor mempty
         delta :: TokenBundle
         delta =
             balanceSelected
@@ -1060,11 +1041,11 @@ prop_runSelection_UTxO_empty
     -> Property
 prop_runSelection_UTxO_empty extraSource balanceRequested = monadicIO $ do
     SelectionState {selected, leftover} <-
-        run $ runSelection NoLimit extraSource UTxOIndex.empty balanceRequested
+        run $ runSelection NoLimit extraSource mempty balanceRequested
     let balanceSelected = view #balance selected
     let balanceLeftover = view #balance leftover
-    assert $ balanceSelected == TokenBundle.empty
-    assert $ balanceLeftover == TokenBundle.empty
+    assert $ balanceSelected == mempty
+    assert $ balanceLeftover == mempty
 
 prop_runSelection_UTxO_notEnough
     :: Small UTxOIndex
@@ -1075,7 +1056,7 @@ prop_runSelection_UTxO_notEnough (Small index) = monadicIO $ do
     let balanceSelected = view #balance selected
     let balanceLeftover = view #balance leftover
     assert $ balanceSelected == balanceAvailable
-    assert $ balanceLeftover == TokenBundle.empty
+    assert $ balanceLeftover == mempty
   where
     balanceAvailable = view #balance index
     balanceRequested = adjustAllQuantities (* 2) balanceAvailable
@@ -1089,9 +1070,9 @@ prop_runSelection_UTxO_exactlyEnough extraSource (Small index) = monadicIO $ do
         run $ runSelection NoLimit Nothing index balanceRequested
     let balanceSelected = view #balance selected
     let balanceLeftover = view #balance leftover
-    assert $ balanceLeftover == TokenBundle.empty
+    assert $ balanceLeftover == mempty
     if UTxOIndex.null index then
-        assert $ balanceSelected == TokenBundle.empty
+        assert $ balanceSelected == mempty
     else
         assert $ addExtraSource extraSource balanceSelected == balanceRequested
   where
@@ -1307,7 +1288,7 @@ prop_assetSelectionLens_givesPriorityToSingletonAssets (Blind (Small u)) =
   where
     asset = Set.findMin $ UTxOIndex.assets u
     assetCount = Set.size $ UTxOIndex.assets u
-    initialState = SelectionState UTxOIndex.empty u
+    initialState = SelectionState mempty u
     lens = assetSelectionLens NoLimit (asset, minimumAssetQuantity)
     minimumAssetQuantity = TokenQuantity 1
 
@@ -1338,7 +1319,7 @@ prop_coinSelectionLens_givesPriorityToCoins (Blind (Small u)) =
                     _  -> assert $ not hasCoin
   where
     entryCount = UTxOIndex.size u
-    initialState = SelectionState UTxOIndex.empty u
+    initialState = SelectionState mempty u
     lens = coinSelectionLens NoLimit Nothing minimumCoinQuantity
     minimumCoinQuantity = Coin 1
 
@@ -1401,9 +1382,9 @@ encodeBoundaryTestCriteria c = SelectionCriteria
     , extraCoinSource =
         Nothing
     , assetsToMint =
-        TokenMap.empty
+        mempty
     , assetsToBurn =
-        TokenMap.empty
+        mempty
     }
   where
     dummyAddresses :: [Address]
@@ -1873,7 +1854,7 @@ genMakeChangeData = flip suchThat isValidMakeChangeData $ do
         mintedAndBurned <- frequency
             -- Here we deliberately introduce the possibility that there is
             -- some overlap between minted and burned assets:
-            [ (9, pure TokenMap.empty)
+            [ (9, pure mempty)
             , (1, genTokenMapSmallRange)
             ]
         assetsToMint <- (<> mintedAndBurned) <$> genAssetsToMint
@@ -1913,7 +1894,7 @@ prop_makeChange_identity
     :: NonEmpty TokenBundle -> Property
 prop_makeChange_identity bundles = (===)
     (F.fold <$> makeChange criteria)
-    (Right TokenBundle.empty)
+    (Right mempty)
   where
     criteria = MakeChangeCriteria
         { minCoinFor = const (Coin 0)
@@ -1922,8 +1903,8 @@ prop_makeChange_identity bundles = (===)
         , bundleSizeAssessor = mkBundleSizeAssessor NoBundleSizeLimit
         , inputBundles = bundles
         , outputBundles = bundles
-        , assetsToMint = TokenMap.empty
-        , assetsToBurn = TokenMap.empty
+        , assetsToMint = mempty
+        , assetsToBurn = mempty
         }
 
 -- | Tests that 'makeChange' generates the correct number of change bundles.
@@ -2002,13 +1983,13 @@ prop_makeChange p =
     checkCoverage $
 
     -- Inspect the sets of minted and burned assets:
-    cover 20 (view #assetsToMint p /= TokenMap.empty)
+    cover 20 (view #assetsToMint p /= mempty)
         "Have some assets to mint" $
-    cover 20 (view #assetsToBurn p /= TokenMap.empty)
+    cover 20 (view #assetsToBurn p /= mempty)
         "Have some assets to burn" $
-    cover 2 (view #assetsToMint p == TokenMap.empty)
+    cover 2 (view #assetsToMint p == mempty)
         "Have no assets to mint" $
-    cover 2 (view #assetsToBurn p == TokenMap.empty)
+    cover 2 (view #assetsToBurn p == mempty)
         "Have no assets to burn" $
 
     -- Inspect the intersection between minted assets and burned assets:
@@ -2247,8 +2228,8 @@ unit_makeChange =
               , bundleSizeAssessor
               , inputBundles = i
               , outputBundles = o
-              , assetsToMint = TokenMap.empty
-              , assetsToBurn = TokenMap.empty
+              , assetsToMint = mempty
+              , assetsToBurn = mempty
               }
     ]
   where
@@ -3280,9 +3261,9 @@ prop_runRoundRobin_generationOrder initialState = property $
 -- | Behaves the same as the original 'mapMaybe' on list.
 prop_mapMaybe_oracle :: NonEmpty Int -> Fun Int (Maybe Int) -> Property
 prop_mapMaybe_oracle xs fn =
-    Maybe.mapMaybe (applyFun fn) (NE.toList xs)
+    mapMaybe (applyFun fn) (NE.toList xs)
     ===
-    mapMaybe (applyFun fn) xs
+    mapMaybeNE (applyFun fn) xs
 
 --------------------------------------------------------------------------------
 -- Testing change map mint/burn functions
@@ -3323,7 +3304,7 @@ prop_addMintValueToChangeMaps_order mint changeMapDiffs =
         $ addMintValueToChangeMaps mint changeMaps
   where
     -- A list of change maps already in ascending partial order
-    changeMaps = NE.scanl (<>) TokenMap.empty changeMapDiffs
+    changeMaps = NE.scanl (<>) mempty changeMapDiffs
 
 -- The plural of this function is equivalent to calling the singular multiple
 -- times. This is an important property because we only test the properties on
@@ -3371,7 +3352,7 @@ prop_removeBurnValueFromChangeMaps_order burn changeMapDiffs =
         $ removeBurnValueFromChangeMaps burn changeMaps
   where
     -- A list of change maps already in ascending partial order
-    changeMaps = NE.scanl (<>) TokenMap.empty changeMapDiffs
+    changeMaps = NE.scanl (<>) mempty changeMapDiffs
 
 -- The plural of this function is equivalent to calling the singular multiple
 -- times. This is an important property because we only test the properties on
@@ -3451,7 +3432,7 @@ consecutivePairs xs = case tailMay xs of
 addExtraSource :: Maybe Coin -> TokenBundle -> TokenBundle
 addExtraSource extraSource =
     TokenBundle.add
-        (maybe TokenBundle.empty TokenBundle.fromCoin extraSource)
+        (maybe mempty TokenBundle.fromCoin extraSource)
 
 mockAsset :: ByteString -> AssetId
 mockAsset a = AssetId (UnsafeTokenPolicyId $ Hash a) (UnsafeTokenName "1")

@@ -33,7 +33,7 @@ module Cardano.Wallet.DB
     , ErrPutLocalTxSubmission (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv )
@@ -63,14 +63,10 @@ import Cardano.Wallet.Primitive.Types.Tx
     , TxMeta
     , TxStatus
     )
-import Control.Monad.IO.Class
-    ( MonadIO )
 import Control.Monad.Trans.Except
     ( ExceptT, runExceptT )
 import Data.Quantity
     ( Quantity (..) )
-import Data.Word
-    ( Word32, Word8 )
 
 import qualified Data.List as L
 

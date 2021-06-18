@@ -28,7 +28,7 @@ module Data.Quantity
     , percentageToDouble
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Arrow
     ( left )

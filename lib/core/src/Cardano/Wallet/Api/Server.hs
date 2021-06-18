@@ -113,7 +113,7 @@ module Cardano.Wallet.Api.Server
     , WalletEngineLog (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, XPub, xpubPublicKey, xpubToBytes )
@@ -441,74 +441,42 @@ import Cardano.Wallet.Transaction
     )
 import Cardano.Wallet.Unsafe
     ( unsafeRunExceptT )
-import Control.Arrow
-    ( second )
-import Control.DeepSeq
-    ( NFData )
 import Control.Error.Util
     ( failWith )
 import Control.Monad
-    ( forM, forever, join, void, when, (>=>) )
-import Control.Monad.IO.Class
-    ( MonadIO, liftIO )
+    ( forever )
 import Control.Monad.Trans.Except
     ( ExceptT (..), runExceptT, throwE, withExceptT )
 import Control.Monad.Trans.Maybe
     ( MaybeT (..), exceptToMaybeT )
-import Control.Tracer
-    ( Tracer, contramap )
 import Crypto.Hash.Utils
     ( blake2b224 )
 import Data.Aeson
     ( (.=) )
-import Data.Bifunctor
-    ( first )
 import Data.ByteString
     ( ByteString )
-import Data.Coerce
-    ( coerce )
-import Data.Either.Extra
-    ( eitherToMaybe )
-import Data.Function
-    ( (&) )
-import Data.Functor
-    ( (<&>) )
 import Data.Functor.Identity
     ( Identity (..) )
-import Data.Generics.Internal.VL.Lens
-    ( Lens', view, (.~), (^.) )
 import Data.Generics.Labels
     ()
 import Data.List
     ( isInfixOf, isPrefixOf, isSubsequenceOf, sortOn, (\\) )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Data.Map.Strict
     ( Map )
 import Data.Maybe
-    ( catMaybes, fromMaybe, isJust, isNothing, mapMaybe, maybeToList )
-import Data.Proxy
-    ( Proxy (..) )
+    ( catMaybes, maybeToList )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Set
     ( Set )
 import Data.Streaming.Network
     ( HostPreference, bindPortTCP, bindRandomPortTCP )
-import Data.Text
-    ( Text )
-import Data.Text.Class
-    ( FromText (..), ToText (..) )
 import Data.Time
     ( UTCTime )
 import Data.Type.Equality
     ( (:~:) (..), type (==), testEquality )
-import Data.Word
-    ( Word32 )
 import Fmt
-    ( blockListF, indentF, pretty )
-import GHC.Stack
-    ( HasCallStack )
+    ( indentF )
 import Network.HTTP.Media.RenderHeader
     ( renderHeader )
 import Network.HTTP.Types.Header
@@ -525,8 +493,6 @@ import Network.Wai.Middleware.Logging
     ( ApiLog (..), newApiLoggerSettings, obfuscateKeys, withApiLogger )
 import Network.Wai.Middleware.ServerError
     ( handleRawError )
-import Numeric.Natural
-    ( Natural )
 import Servant
     ( Application
     , JSON
@@ -553,13 +519,13 @@ import System.IO.Error
 import System.Random
     ( getStdRandom, random )
 import Type.Reflection
-    ( Typeable, typeRep )
+    ( typeRep )
 import UnliftIO.Async
     ( race_ )
 import UnliftIO.Concurrent
     ( threadDelay )
 import UnliftIO.Exception
-    ( IOException, bracket, throwIO, tryAnyDeep, tryJust )
+    ( IOException, bracket, tryAnyDeep, tryJust )
 
 import qualified Cardano.Wallet as W
 import qualified Cardano.Wallet.Api.Types as Api
@@ -1179,7 +1145,7 @@ mkLegacyWallet ctx wid cp meta pending progress = do
         :: WorkerCtx ctx
         -> Handler (Either ErrWithRootKey ())
     matchEmptyPassphrase wrk = liftIO $ runExceptT $
-        W.withRootKey @_ @s @k wrk wid mempty Prelude.id (\_ _ -> pure ())
+        W.withRootKey @_ @s @k wrk wid mempty idFunc (\_ _ -> pure ())
 
 postRandomWallet
     :: forall ctx s k n.
@@ -1847,7 +1813,7 @@ postTransactionOld ctx genChange (ApiT wid) body = do
     (sel, tx, txMeta, txTime) <- withWorkerCtx ctx wid liftE liftE $ \wrk -> do
         w <- liftHandler $ W.readWalletUTxOIndex @_ @s @k wrk wid
         sel <- liftHandler
-            $ W.selectAssets @_ @s @k wrk w txCtx outs (const Prelude.id)
+            $ W.selectAssets @_ @s @k wrk w txCtx outs (const idFunc)
         sel' <- liftHandler
             $ W.assignChangeAddressesAndUpdateDb wrk wid genChange sel
         (tx, txMeta, txTime, sealedTx) <- liftHandler
@@ -2010,7 +1976,7 @@ constructTransaction ctx genChange (ApiT wid) body = do
         (sel, sel', fee) <- case (body ^. #payments) of
             Nothing -> do
                 utx <- liftHandler
-                    $ W.selectAssetsNoOutputs @_ @s @k wrk wid w txCtx (const Prelude.id)
+                    $ W.selectAssetsNoOutputs @_ @s @k wrk wid w txCtx (const idFunc)
                 (FeeEstimation estMin _) <- liftHandler $
                     W.estimateFee $ W.selectAssetsNoOutputs @_ @s @k wrk wid w txCtx getFee
                 sel <- liftHandler $
@@ -2022,7 +1988,7 @@ constructTransaction ctx genChange (ApiT wid) body = do
             Just (ApiPaymentAddresses content) -> do
                 let outs = addressAmountToTxOut <$> content
                 utx <- liftHandler
-                    $ W.selectAssets  @_ @s @k wrk w txCtx outs (const Prelude.id)
+                    $ W.selectAssets  @_ @s @k wrk w txCtx outs (const idFunc)
                 (FeeEstimation estMin _) <- liftHandler $ W.estimateFee $ W.selectAssets @_ @s @k wrk w txCtx outs getFee
                 sel <- liftHandler $
                     W.assignChangeAddressesWithoutDbUpdate wrk wid genChange utx
@@ -2091,7 +2057,7 @@ joinStakePool ctx knownPools getPoolStatus apiPoolId (ApiT wid) body = do
         wal <- liftHandler $ W.readWalletUTxOIndex @_ @s @k wrk wid
         sel <- liftHandler
             $ W.selectAssetsNoOutputs @_ @s @k wrk wid wal txCtx
-            $ const Prelude.id
+            $ const idFunc
         sel' <- liftHandler
             $ W.assignChangeAddressesAndUpdateDb wrk wid genChange sel
         (tx, txMeta, txTime, sealedTx) <- liftHandler
@@ -2176,7 +2142,7 @@ quitStakePool ctx (ApiT wid) body = do
         wal <- liftHandler $ W.readWalletUTxOIndex @_ @s @k wrk wid
         sel <- liftHandler
             $ W.selectAssetsNoOutputs @_ @s @k wrk wid wal txCtx
-            $ const Prelude.id
+            $ const idFunc
         sel' <- liftHandler
             $ W.assignChangeAddressesAndUpdateDb wrk wid genChange sel
         (tx, txMeta, txTime, sealedTx) <- liftHandler

@@ -33,12 +33,8 @@ module Cardano.Wallet.Shelley.Launch
     , TempDirLog (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Chain.Genesis
     ( GenesisData (..), readGenesisData )
 import Cardano.CLI
@@ -48,7 +44,12 @@ import Cardano.Launcher
 import Cardano.Launcher.Node
     ( CardanoNodeConn, cardanoNodeConn, isWindows )
 import Cardano.Wallet.Logging
-    ( BracketLog (..), bracketTracer )
+    ( BracketLog (..)
+    , HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    , Severity (..)
+    , bracketTracer
+    )
 import Cardano.Wallet.Primitive.AddressDerivation
     ( NetworkDiscriminant (..) )
 import Cardano.Wallet.Primitive.Types
@@ -57,26 +58,14 @@ import Cardano.Wallet.Shelley
     ( SomeNetworkDiscriminant (..) )
 import Cardano.Wallet.Shelley.Compatibility
     ( NodeVersionData, nodeToClientVersion )
-import Control.Monad.IO.Unlift
-    ( MonadUnliftIO, liftIO )
 import Control.Monad.Trans.Except
     ( ExceptT (..), withExceptT )
-import Control.Tracer
-    ( Tracer (..), contramap )
-import Data.Bifunctor
-    ( first )
-import Data.Maybe
-    ( isJust )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Text
-    ( Text )
 import Data.Text.Class
-    ( FromText (..), TextDecodingError, ToText (..) )
+    ( TextDecodingError )
 import GHC.TypeLits
     ( KnownNat, Nat, SomeNat (..), someNatVal )
 import Options.Applicative
-    ( Parser, eitherReader, flag', help, long, metavar, option, (<|>) )
+    ( Parser, eitherReader, flag', help, long, metavar, option )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient

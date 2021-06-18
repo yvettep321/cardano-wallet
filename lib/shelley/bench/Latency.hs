@@ -13,7 +13,7 @@
 
 module Main where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.LogItem
     ( LogObject )
@@ -76,8 +76,6 @@ import Cardano.Wallet.Shelley.Launch.Cluster
     )
 import Cardano.Wallet.Unsafe
     ( unsafeFromText )
-import Control.Arrow
-    ( first )
 import Control.Monad
     ( replicateM, replicateM_ )
 import Control.Monad.IO.Class

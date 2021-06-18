@@ -19,7 +19,7 @@ module Cardano.Wallet.DummyTarget.Primitive.Types
     , dummyNetworkLayer
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Network
     ( NetworkLayer (..) )
@@ -54,8 +54,6 @@ import Crypto.Hash
     ( Blake2b_256, hash )
 import Data.ByteString
     ( ByteString )
-import Data.Coerce
-    ( coerce )
 import Data.Functor.Identity
     ( Identity (..) )
 import Data.Map.Strict

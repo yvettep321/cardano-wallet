@@ -97,7 +97,7 @@ module Cardano.CLI
     , ekgEnabled
     ) where
 
-import Prelude hiding
+import Cardano.Wallet.Prelude hiding
     ( getLine )
 
 import Cardano.BM.Backend.Switchboard
@@ -194,43 +194,27 @@ import Cardano.Wallet.Primitive.Types.Tx
 import Cardano.Wallet.Version
     ( gitRevision, showFullVersion, version )
 import Control.Applicative
-    ( optional, some, (<|>) )
+    ( optional )
 import Control.Arrow
-    ( first, left )
+    ( left )
 import Control.Monad
-    ( forM_, forever, join, unless, void, when )
-import Control.Monad.IO.Class
-    ( MonadIO )
+    ( forever )
 import Data.Aeson
     ( ToJSON (..), (.:), (.=) )
-import Data.Bifunctor
-    ( bimap )
 import Data.Char
     ( toLower )
-import Data.Coerce
-    ( coerce )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
-import Data.Maybe
-    ( fromMaybe, isJust )
 import Data.Quantity
     ( Quantity (..) )
 import Data.String
     ( IsString )
-import Data.Text
-    ( Text )
 import Data.Text.Class
-    ( FromText (..), TextDecodingError (..), ToText (..), showT )
+    ( TextDecodingError (..), showT )
 import Data.Text.Read
     ( decimal )
 import Data.Time.Clock
     ( NominalDiffTime )
 import Data.Void
     ( Void )
-import Fmt
-    ( Buildable, pretty )
-import GHC.Generics
-    ( Generic )
 import GHC.TypeLits
     ( Symbol )
 import Network.HTTP.Client
@@ -1675,13 +1659,13 @@ initTracer loggerName outputs = do
   where
     -- https://github.com/input-output-hk/cardano-node/blob/f7d57e30c47028ba2aeb306a4f21b47bb41dec01/cardano-node/src/Cardano/Node/Configuration/Logging.hs#L224
     startCapturingMetrics :: Trace IO Text -> IO ()
-    startCapturingMetrics trace0 = do
-      let trace = appendName "metrics" trace0
+    startCapturingMetrics tr' = do
+      let tr = appendName "metrics" tr'
           counters = [Obs.MemoryStats, Obs.ProcessStats
             , Obs.NetStats, Obs.IOStats, Obs.GhcRtsStats, Obs.SysStats]
       _ <- Async.async $ forever $ do
         cts <- readCounters (ObservableTraceSelf counters)
-        traceCounters trace cts
+        traceCounters tr cts
         threadDelay 30_000_000   -- 30 seconds
       pure ()
      where

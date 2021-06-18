@@ -10,7 +10,7 @@ module Test.Utils.Paths
     , inNixBuild
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad.IO.Class
     ( liftIO )

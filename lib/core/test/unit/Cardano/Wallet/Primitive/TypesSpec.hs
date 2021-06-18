@@ -13,7 +13,7 @@ module Cardano.Wallet.Primitive.TypesSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv )
@@ -125,37 +125,25 @@ import Cardano.Wallet.Primitive.Types.UTxO
 import Cardano.Wallet.Unsafe
     ( someDummyMnemonic )
 import Control.Monad
-    ( forM_, replicateM )
+    ( replicateM )
 import Crypto.Hash
     ( hash )
-import Data.Either
-    ( isRight )
-import Data.Function
-    ( (&) )
 import Data.Function.Utils
     ( applyN )
 import Data.Maybe
-    ( catMaybes, fromMaybe, isJust, isNothing )
-import Data.Proxy
-    ( Proxy (..) )
+    ( catMaybes )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Set
     ( Set, (\\) )
-import Data.Text
-    ( Text )
 import Data.Text.Class
-    ( TextDecodingError (..), fromText, toText )
+    ( TextDecodingError (..) )
 import Data.Time
     ( Day (ModifiedJulianDay), UTCTime, toModifiedJulianDay, utctDay )
 import Data.Time.Utils
     ( utcTimePred, utcTimeSucc )
-import Data.Word
-    ( Word32 )
 import Data.Word.Odd
     ( Word31 )
-import Fmt
-    ( pretty )
 import Test.Hspec
     ( Spec
     , anyErrorCall

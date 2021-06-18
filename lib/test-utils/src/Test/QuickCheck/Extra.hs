@@ -12,7 +12,7 @@ module Test.QuickCheck.Extra
     , shrinkInterleaved
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Test.QuickCheck
     ( Gen, scale )

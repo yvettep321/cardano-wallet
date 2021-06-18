@@ -8,7 +8,7 @@
 module Cardano.Wallet.Primitive.Migration.PlanningSpec
     where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Migration.Planning
     ( CategorizedUTxO (..)

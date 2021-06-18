@@ -43,7 +43,7 @@ module Cardano.Wallet.Primitive.AddressDerivation.Byron
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Crypto.Wallet
     ( DerivationScheme (DerivationScheme1)

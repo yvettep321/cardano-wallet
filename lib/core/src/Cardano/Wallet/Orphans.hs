@@ -10,7 +10,7 @@
 
 module Cardano.Wallet.Orphans where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Api
     ( TxMetadata (..), TxMetadataValue (..) )

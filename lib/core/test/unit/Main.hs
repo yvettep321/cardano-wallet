@@ -1,6 +1,6 @@
 module Main where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Startup
     ( withUtf8Encoding )

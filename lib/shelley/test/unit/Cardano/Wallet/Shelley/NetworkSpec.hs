@@ -6,7 +6,7 @@
 
 module Cardano.Wallet.Shelley.NetworkSpec (spec) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.Severity
     ( Severity (..) )
@@ -27,15 +27,13 @@ import Cardano.Wallet.Shelley.Launch.Cluster
 import Cardano.Wallet.Shelley.Network
     ( Observer (..), ObserverLog (..), newObserver, withNetworkLayer )
 import Control.Monad
-    ( replicateM, unless, void )
-import Control.Tracer
-    ( Tracer, contramap )
+    ( replicateM )
 import Data.Map
     ( Map )
 import Data.Set
     ( Set )
 import Fmt
-    ( build, fmt, indentF )
+    ( indentF )
 import Test.Hspec
     ( Spec, beforeAll, describe, it, shouldBe, shouldReturn )
 import Test.QuickCheck

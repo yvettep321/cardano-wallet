@@ -29,18 +29,12 @@ module Cardano.Startup
     , ShutdownHandlerLog(..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
     ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
-import Control.Tracer
-    ( Tracer, traceWith )
-import Data.Either.Extra
-    ( eitherToMaybe )
-import Data.Text.Class
-    ( ToText (..) )
 import GHC.IO.Encoding
     ( setFileSystemEncoding )
 import System.IO
@@ -52,7 +46,7 @@ import UnliftIO.Async
 import UnliftIO.Concurrent
     ( forkIO )
 import UnliftIO.Exception
-    ( IOException, catch, handle, throwIO )
+    ( IOException, catch, handle )
 import UnliftIO.MVar
     ( MVar, newEmptyMVar, putMVar, takeMVar )
 

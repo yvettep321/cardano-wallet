@@ -7,7 +7,7 @@
 
 module Cardano.Wallet.Api.ServerSpec (spec) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Api
     ( AnyCardanoEra (..), CardanoEra (..) )
@@ -42,14 +42,10 @@ import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Unsafe
     ( unsafeFromText )
-import Control.Monad
-    ( void )
 import Control.Monad.Trans.Except
     ( ExceptT (..), throwE )
 import Data.Either
     ( isLeft )
-import Data.Maybe
-    ( isJust, isNothing )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Time.Clock

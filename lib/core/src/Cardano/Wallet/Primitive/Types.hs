@@ -149,7 +149,7 @@ module Cardano.Wallet.Primitive.Types
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Slotting.Slot
     ( SlotNo (..) )

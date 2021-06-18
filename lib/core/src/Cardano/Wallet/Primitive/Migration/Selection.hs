@@ -54,7 +54,7 @@ module Cardano.Wallet.Primitive.Migration.Selection
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )

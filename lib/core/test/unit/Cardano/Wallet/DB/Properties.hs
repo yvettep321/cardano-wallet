@@ -19,7 +19,7 @@ module Cardano.Wallet.DB.Properties
     ( properties
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.DB
     ( DBLayer (..)

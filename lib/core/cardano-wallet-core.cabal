@@ -1,3 +1,4 @@
+cabal-version:       3.0
 name:                cardano-wallet-core
 version:             2021.7.30
 synopsis:            The Wallet Backend for a Cardano node.
@@ -5,34 +6,44 @@ description:         Please see README.md
 homepage:            https://github.com/input-output-hk/cardano-wallet
 author:              IOHK Engineering Team
 maintainer:          operations@iohk.io
-copyright:           2018-2020 IOHK
+copyright:           2018-2021 IOHK
 license:             Apache-2.0
 category:            Web
 build-type:          Simple
 extra-source-files:  specifications/api/swagger.yaml
-cabal-version:       >=1.10
 
 flag release
     description: Enable optimization and `-Werror`
     default: False
     manual: True
 
-library
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -Wall
-      -Wcompat
-      -fwarn-redundant-constraints
+common base
+  build-depends: base >= 4.14 && < 4.15
+               , cardano-wallet-base
+
+common project-config
+  default-language:     Haskell2010
+  default-extensions:   NoImplicitPrelude
+                        OverloadedStrings
+
+  ghc-options:          -Wall
+                        -Wcompat
+                        -Wredundant-constraints
+                        -Wincomplete-record-updates
+                        -Wpartial-fields
+                        -Wunused-packages
+
   if (flag(release))
-    ghc-options: -O2 -Werror
+    ghc-options:       -O2 -Werror
+
+common exe
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -with-rtsopts=-T
+
+library
+  import: base, project-config
   build-depends:
       aeson
     , async
-    , base
     , bech32
     , bech32-th
     , binary
@@ -40,7 +51,7 @@ library
     , cardano-addresses
     , cardano-api
     , cardano-crypto
-    , cardano-numeric
+    , cardano-wallet-numeric
     , cardano-slotting
     , cborg
     , containers
@@ -84,7 +95,6 @@ library
     , persistent >=2.13 && <2.14
     , persistent-sqlite >=2.13 && <2.14
     , persistent-template >=2.12 && <2.13
-    , pretty-simple
     , profunctors
     , quiet
     , random
@@ -105,7 +115,7 @@ library
     , string-interpolate
     , template-haskell
     , text
-    , text-class
+    , cardano-wallet-text-class
     , time
     , tls
     , tracer-transformers
@@ -122,17 +132,6 @@ library
     , x509-store
     , x509-validation
     , Win32-network
-    -- TODO:
-    --
-    -- Move all test-related code out of the main library and into a dedicated
-    -- testing library.
-    --
-    -- The following imports are currently necessary to define generators and
-    -- shrinkers that can be imported by both the `cardano-wallet-core` and
-    -- `cardano-wallet` libraries:
-    --
-    , QuickCheck
-    , cardano-wallet-test-utils
   hs-source-dirs:
       src
   exposed-modules:
@@ -153,7 +152,6 @@ library
       Cardano.Wallet.Api.Server
       Cardano.Wallet.Api.Server.Tls
       Cardano.Wallet.Api.Types
-      Cardano.Wallet.Compat
       Cardano.Wallet.DB
       Cardano.Wallet.DB.MVar
       Cardano.Wallet.DB.Model
@@ -214,15 +212,34 @@ library
       Network.Wai.Middleware.ServerError
       Network.Wai.Middleware.Logging
       Ouroboros.Network.Client.Wallet
-      UnliftIO.Compat
-        -- TODO:
-        --
-        -- Move all test-related code out of the main library and into a
-        -- dedicated testing library.
-        --
-        -- The following modules define QC generators and shrinkers that can
-        -- be used by both `cardano-wallet-core` and `cardano-wallet`:
-        --
+  other-modules:
+      Paths_cardano_wallet_core
+
+library test-bench-shared
+  import: base, project-config
+  visibility: public
+  build-depends:
+      cardano-wallet-core
+    , cardano-wallet-test-utils
+    , cardano-wallet-text-class
+    , aeson
+    , bytestring
+    , cardano-addresses
+    , cardano-api
+    , cborg
+    , cryptonite
+    , containers
+    , extra
+    , memory
+    , text
+    , time
+    , unordered-containers
+    , QuickCheck
+  hs-source-dirs:
+      test/shared
+  exposed-modules:
+      Cardano.Wallet.DummyTarget.Primitive.Types
+      Cardano.Wallet.Gen
       Cardano.Wallet.Primitive.Types.Address.Gen
       Cardano.Wallet.Primitive.Types.Coin.Gen
       Cardano.Wallet.Primitive.Types.TokenBundle.Gen
@@ -231,35 +248,25 @@ library
       Cardano.Wallet.Primitive.Types.TokenQuantity.Gen
       Cardano.Wallet.Primitive.Types.Tx.Gen
       Cardano.Wallet.Primitive.Types.UTxOIndex.Gen
-      Cardano.Wallet.Gen
-  other-modules:
-      Paths_cardano_wallet_core
 
 test-suite unit
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
+  import: base, project-config, exe
   ghc-options:
-      -threaded -rtsopts
-      -Wall
       "-with-rtsopts=-M2G"
       "-with-rtsopts=-N4"
-  if (flag(release))
-    ghc-options: -O2 -Werror
   build-depends:
-      base
+      test-bench-shared
     , aeson
     , aeson-qq
     , bytestring
     , cardano-addresses
     , cardano-api
     , cardano-crypto
-    , cardano-numeric
+    , cardano-wallet-numeric
     , cardano-wallet-core
     , cardano-wallet-launcher
     , cardano-wallet-test-utils
+    , cardano-wallet-text-class
     , cardano-sl-x509
     , cardano-slotting
     , cborg
@@ -294,14 +301,12 @@ test-suite unit
     , network-uri
     , nothunks
     , persistent
-    , pretty-simple
     , regex-pcre-builtin
     , OddWord
     , ouroboros-consensus
     , QuickCheck
     , quickcheck-classes
     , quickcheck-state-machine >= 0.6.0
-    , quiet
     , random
     , retry
     , safe
@@ -316,7 +321,6 @@ test-suite unit
     , string-qq
     , temporary
     , text
-    , text-class
     , tls
     , time
     , transformers
@@ -330,13 +334,12 @@ test-suite unit
     , wai
     , wai-extra
     , warp
-  build-tools:
-      hspec-discover
+  build-tool-depends:
+      hspec-discover:hspec-discover
   type:
       exitcode-stdio-1.0
   hs-source-dirs:
       test/unit
-      test/shared
   main-is:
       Main.hs
   other-modules:
@@ -357,7 +360,6 @@ test-suite unit
       Cardano.Wallet.DB.SqliteSpec
       Cardano.Wallet.DB.Sqlite.TypesSpec
       Cardano.Wallet.DB.StateMachine
-      Cardano.Wallet.DummyTarget.Primitive.Types
       Cardano.Wallet.Network.PortsSpec
       Cardano.Wallet.NetworkSpec
       Cardano.Wallet.Primitive.AddressDerivation.ByronSpec
@@ -399,18 +401,9 @@ test-suite unit
       Spec
 
 benchmark db
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
+      test-bench-shared
     , bytestring
     , cardano-addresses
     , cardano-crypto
@@ -429,7 +422,7 @@ benchmark db
     , memory
     , random
     , text
-    , text-class
+    , cardano-wallet-text-class
     , time
     , transformers
     , unliftio
@@ -437,8 +430,5 @@ benchmark db
      exitcode-stdio-1.0
   hs-source-dirs:
       test/bench/db
-      test/shared
   main-is:
       Main.hs
-  other-modules:
-      Cardano.Wallet.DummyTarget.Primitive.Types

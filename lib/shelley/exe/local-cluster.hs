@@ -9,7 +9,7 @@
 
 module Main where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.Severity
     ( Severity (..) )
@@ -59,8 +59,6 @@ import Cardano.Wallet.Shelley.Launch.Cluster
     , walletMinSeverityFromEnv
     , withCluster
     )
-import Control.Arrow
-    ( first )
 import Control.Monad
     ( void, when )
 import Control.Tracer

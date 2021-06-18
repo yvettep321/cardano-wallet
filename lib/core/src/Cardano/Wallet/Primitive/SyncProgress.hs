@@ -17,7 +17,7 @@ module Cardano.Wallet.Primitive.SyncProgress
     , syncProgress
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Slotting
     ( TimeInterpreter, interpretQuery, slotToRelTime )

@@ -1,3 +1,4 @@
+cabal-version:       3.0
 name:                cardano-wallet
 version:             2021.7.30
 synopsis:            Wallet backend protocol-specific bits implemented using Shelley nodes
@@ -5,31 +6,41 @@ description:         Please see README.md
 homepage:            https://github.com/input-output-hk/cardano-wallet
 author:              IOHK Engineering Team
 maintainer:          operations@iohk.io
-copyright:           2020 IOHK
+copyright:           2018-2021 IOHK
 license:             Apache-2.0
 category:            Web
 build-type:          Simple
-cabal-version:       >=1.10
 
 flag release
     description: Enable optimization and `-Werror`
     default: False
     manual: True
 
-library
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -Wall
-      -Wcompat
-      -fwarn-redundant-constraints
+common base
+  build-depends: base >= 4.14 && < 4.15
+               , cardano-wallet-base
+
+common project-config
+  default-language:     Haskell2010
+  default-extensions:   NoImplicitPrelude
+                        OverloadedStrings
+
+  ghc-options:          -Wall
+                        -Wcompat
+                        -Wincomplete-record-updates
+                        -Wpartial-fields
+                        -Wunused-packages
+
   if (flag(release))
-    ghc-options: -O2 -Werror
+    ghc-options:       -O2 -Werror
+
+common exe
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -with-rtsopts=-T
+
+library
+  import: base, project-config
   build-depends:
-      base
+      cardano-wallet-base
     , aeson
     , base58-bytestring
     , bech32
@@ -80,7 +91,7 @@ library
     , strict-non-empty-containers
     , temporary
     , text
-    , text-class
+    , cardano-wallet-text-class
     , time
     , transformers
     , typed-process
@@ -106,19 +117,9 @@ library
       Cardano.Wallet.Shelley.Pools
 
 executable cardano-wallet
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , cardano-wallet-cli
+      cardano-wallet-cli
     , cardano-wallet-core
     , cardano-wallet-launcher
     , cardano-wallet
@@ -128,7 +129,7 @@ executable cardano-wallet
     , network-uri
     , optparse-applicative
     , text
-    , text-class
+    , cardano-wallet-text-class
     , transformers
     , unliftio
   hs-source-dirs:
@@ -137,19 +138,9 @@ executable cardano-wallet
     cardano-wallet.hs
 
 executable local-cluster
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , cardano-wallet-cli
+      cardano-wallet-cli
     , cardano-wallet-core
     , cardano-wallet-core-integration
     , cardano-wallet-launcher
@@ -160,26 +151,16 @@ executable local-cluster
     , filepath
     , lobemo-backend-ekg
     , text
-    , text-class
+    , cardano-wallet-text-class
   hs-source-dirs:
       exe
   main-is:
       local-cluster.hs
 
 executable mock-token-metadata-server
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , ansi-wl-pprint
+      ansi-wl-pprint
     , cardano-wallet-core
     , optparse-applicative
     , wai-extra
@@ -189,18 +170,9 @@ executable mock-token-metadata-server
      mock-token-metadata-server.hs
 
 test-suite unit
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
+      cardano-wallet-core:test-bench-shared
     , base58-bytestring
     , bech32
     , bech32-th
@@ -221,16 +193,15 @@ test-suite unit
     , hspec-core
     , memory
     , optparse-applicative
-    , ouroboros-consensus-shelley
     , ouroboros-network
     , shelley-spec-ledger
     , text
-    , text-class
+    , cardano-wallet-text-class
     , transformers
     , unliftio
     , QuickCheck
-  build-tools:
-      hspec-discover
+  build-tool-depends:
+      hspec-discover:hspec-discover
   type:
      exitcode-stdio-1.0
   hs-source-dirs:
@@ -245,63 +216,56 @@ test-suite unit
       Cardano.Wallet.Shelley.TransactionSpec
       Spec
 
-test-suite integration
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+library faucet
+  import: base, project-config
   build-depends:
-      base
-    , cardano-wallet-cli
+      cardano-wallet-core-integration
+    , aeson
+    , bytestring
+    , cardano-addresses
+    , cardano-api
+    , unliftio
+
+  hs-source-dirs:
+      test/faucet
+  exposed-modules:
+      Cardano.Wallet.Shelley.Faucet
+
+test-suite integration
+  import: base, project-config, exe
+  build-depends:
+      cardano-wallet-cli
     , cardano-wallet-core
     , cardano-wallet-core-integration
     , cardano-wallet-launcher
     , cardano-wallet
+    , cardano-wallet:faucet
     , cardano-wallet-test-utils
     , contra-tracer
     , directory
     , either
     , filepath
-    , hspec
     , hspec-core
     , http-client
     , iohk-monitoring
     , lobemo-backend-ekg
     , network-uri
     , text
-    , text-class
+    , cardano-wallet-text-class
     , unliftio
-  build-tools:
-      cardano-wallet
+  build-tool-depends:
+      cardano-wallet:cardano-wallet
   type:
      exitcode-stdio-1.0
   hs-source-dirs:
       test/integration
   main-is:
       Main.hs
-  other-modules:
-      Cardano.Wallet.Shelley.Faucet
 
 benchmark restore
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , aeson
+      aeson
     , bytestring
     , cardano-addresses
     , cardano-wallet-core
@@ -314,7 +278,7 @@ benchmark restore
     , iohk-monitoring
     , say
     , text
-    , text-class
+    , cardano-wallet-text-class
     , time
     , transformers
     , unliftio
@@ -326,30 +290,21 @@ benchmark restore
       Restore.hs
 
 benchmark latency
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , aeson
+      aeson
     , cardano-wallet-cli
     , cardano-wallet-core
     , cardano-wallet-core-integration
     , cardano-wallet
+    , cardano-wallet:faucet
     , cardano-wallet-launcher
     , directory
     , filepath
     , generic-lens
+    , hspec
     , http-client
     , http-types
-    , hspec
     , iohk-monitoring
     , text
     , unliftio
@@ -357,8 +312,5 @@ benchmark latency
      exitcode-stdio-1.0
   hs-source-dirs:
       bench
-      test/integration
   main-is:
       Latency.hs
-  other-modules:
-      Cardano.Wallet.Shelley.Faucet

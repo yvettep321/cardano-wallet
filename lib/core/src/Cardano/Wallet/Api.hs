@@ -152,7 +152,7 @@ module Cardano.Wallet.Api
     , HasTokenMetadataClient
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet
     ( TxSubmitLog, WalletLayer (..), WalletWorkerLog )
@@ -247,22 +247,12 @@ import Cardano.Wallet.TokenMetadata
     ( TokenMetadataClient )
 import Cardano.Wallet.Transaction
     ( TransactionLayer )
-import Control.Tracer
-    ( Tracer, contramap )
 import Data.ByteString
     ( ByteString )
-import Data.Generics.Internal.VL.Lens
-    ( Lens' )
 import Data.Generics.Labels
     ()
 import Data.Generics.Product.Typed
     ( HasType, typed )
-import Data.Kind
-    ( Type )
-import Data.List.NonEmpty
-    ( NonEmpty )
-import GHC.Generics
-    ( Generic )
 import Servant.API
     ( (:<|>)
     , (:>)

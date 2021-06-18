@@ -22,7 +22,6 @@ module Cardano.Wallet.Primitive.Types.TokenBundle
     , AssetId (..)
 
     -- * Construction
-    , empty
     , fromFlatList
     , fromNestedList
     , fromNestedMap
@@ -63,7 +62,7 @@ module Cardano.Wallet.Primitive.Types.TokenBundle
 
     ) where
 
-import Prelude hiding
+import Cardano.Wallet.Prelude hiding
     ( subtract )
 
 import Algebra.PartialOrd
@@ -146,7 +145,7 @@ instance Semigroup TokenBundle where
     (<>) = add
 
 instance Monoid TokenBundle where
-    mempty = empty
+    mempty = TokenBundle (Coin 0) mempty
 
 --------------------------------------------------------------------------------
 -- Text serialization
@@ -176,11 +175,6 @@ buildMap = blockMapF . fmap (first $ id @String)
 --------------------------------------------------------------------------------
 -- Construction
 --------------------------------------------------------------------------------
-
--- | The empty token bundle.
---
-empty :: TokenBundle
-empty = TokenBundle (Coin 0) mempty
 
 -- | Creates a token bundle from a coin and a flat list of token quantities.
 --

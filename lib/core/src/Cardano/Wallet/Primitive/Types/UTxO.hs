@@ -34,7 +34,7 @@ module Cardano.Wallet.Primitive.Types.UTxO
     , restrictedTo
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )

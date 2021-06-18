@@ -5,7 +5,7 @@ module Cardano.Wallet.NetworkSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Gen
     ( genBlockHeader, genSlotNo )

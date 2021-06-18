@@ -7,6 +7,7 @@ resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/65c9
 compiler: ghc-8.10.5
 
 packages:
+- lib/base
 - lib/core
 - lib/core-integration
 - lib/cli

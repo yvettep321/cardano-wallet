@@ -9,7 +9,7 @@ module Cardano.Wallet.DB.Sqlite.TypesSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.DB.Sqlite.Types
     ( stdGenFromString )
@@ -21,16 +21,10 @@ import Cardano.Wallet.Primitive.Types.TokenQuantity
     ( TokenQuantity (..) )
 import Cardano.Wallet.Primitive.Types.TokenQuantity.Gen
     ( genTokenQuantityFullRange, shrinkTokenQuantityFullRange )
-import Data.Either
-    ( isLeft )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Time.Clock.POSIX
     ( POSIXTime )
 import Data.Typeable
-    ( Typeable, typeRep )
-import Data.Word
-    ( Word64 )
+    ( typeRep )
 import Data.Word.Odd
     ( Word31 )
 import Database.Persist.Class

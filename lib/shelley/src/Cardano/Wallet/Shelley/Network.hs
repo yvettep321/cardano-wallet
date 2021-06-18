@@ -41,7 +41,7 @@ module Cardano.Wallet.Shelley.Network
     , NetworkLayerLog (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Api
     ( AnyCardanoEra (..)
@@ -49,16 +49,19 @@ import Cardano.Api
     , NodeToClientVersion (..)
     , SlotNo (..)
     )
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Launcher.Node
     ( CardanoNodeConn, nodeSocketFile )
 import Cardano.Wallet.Byron.Compatibility
     ( byronCodecConfig, protocolParametersFromUpdateState )
 import Cardano.Wallet.Logging
-    ( BracketLog (..), bracketTracer, produceTimings )
+    ( BracketLog (..)
+    , HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    , Severity (..)
+    , bracketTracer
+    , nullTracer
+    , produceTimings
+    )
 import Cardano.Wallet.Network
     ( Cursor, ErrPostTx (..), NetworkLayer (..), mapCursor )
 import Cardano.Wallet.Primitive.Slotting
@@ -93,7 +96,7 @@ import Cardano.Wallet.Shelley.Compatibility
 import Control.Applicative
     ( liftA3 )
 import Control.Monad
-    ( forever, guard, unless, void, when, (>=>) )
+    ( forever )
 import Control.Monad.Class.MonadAsync
     ( MonadAsync )
 import Control.Monad.Class.MonadST
@@ -122,46 +125,30 @@ import Control.Monad.Class.MonadThrow
     ( MonadThrow )
 import Control.Monad.Class.MonadTimer
     ( MonadTimer, threadDelay )
-import Control.Monad.IO.Unlift
-    ( MonadIO, MonadUnliftIO, liftIO )
 import Control.Monad.Trans.Except
     ( ExceptT (..), runExceptT, throwE )
 import Control.Retry
     ( RetryPolicyM, RetryStatus (..), capDelay, fibonacciBackoff, recovering )
-import Control.Tracer
-    ( Tracer (..), contramap, nullTracer, traceWith )
 import Data.ByteArray.Encoding
     ( Base (..), convertToBase )
 import Data.ByteString.Lazy
     ( ByteString )
-import Data.Function
-    ( (&) )
 import Data.Functor.Identity
     ( runIdentity )
 import Data.List
     ( isInfixOf )
 import Data.Map
     ( Map, (!) )
-import Data.Maybe
-    ( fromMaybe )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Percentage )
 import Data.Set
     ( Set )
-import Data.Text
-    ( Text )
-import Data.Text.Class
-    ( ToText (..) )
 import Data.Time.Clock
     ( DiffTime )
 import Data.Void
     ( Void )
 import Fmt
-    ( Buildable (..), fmt, listF, mapF, pretty )
-import GHC.Stack
-    ( HasCallStack )
+    ( listF, mapF )
 import Network.Mux
     ( MuxError (..), MuxErrorType (..), WithMuxBearer (..) )
 import Ouroboros.Consensus.Cardano

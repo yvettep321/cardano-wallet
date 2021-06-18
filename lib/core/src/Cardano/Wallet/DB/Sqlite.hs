@@ -16,6 +16,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
 {- HLINT ignore "Redundant flip" -}
 
@@ -49,16 +50,12 @@ module Cardano.Wallet.DB.Sqlite
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, XPub )
 import Cardano.Address.Script
     ( Cosigner (..), ScriptTemplate (..) )
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.DB.Sqlite
     ( DBField (..)
     , DBLog (..)
@@ -124,6 +121,8 @@ import Cardano.Wallet.DB.Sqlite.TH
     )
 import Cardano.Wallet.DB.Sqlite.Types
     ( BlockId (..), HDPassphrase (..), TxId (..) )
+import Cardano.Wallet.Logging
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..), Severity (..) )
 import Cardano.Wallet.Primitive.AddressDerivation
     ( Depth (..)
     , DerivationType (..)
@@ -158,30 +157,12 @@ import Cardano.Wallet.Primitive.Types.TokenBundle
     ( TokenBundle )
 import Cardano.Wallet.Primitive.Types.TokenMap
     ( AssetId (..) )
-import Control.Monad
-    ( forM, forM_, unless, void, when, (<=<) )
 import Control.Monad.Extra
     ( concatMapM )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Control.Monad.Trans.Class
-    ( lift )
 import Control.Monad.Trans.Except
     ( ExceptT (..) )
 import Control.Monad.Trans.Maybe
     ( MaybeT (..) )
-import Control.Tracer
-    ( Tracer, contramap, traceWith )
-import Data.Bifunctor
-    ( second )
-import Data.Coerce
-    ( coerce )
-import Data.Either
-    ( isRight )
-import Data.Functor
-    ( (<&>) )
-import Data.Generics.Internal.VL.Lens
-    ( view, (^.) )
 import Data.List
     ( nub, sortOn )
 import Data.List.Split
@@ -189,23 +170,15 @@ import Data.List.Split
 import Data.Map.Strict
     ( Map )
 import Data.Maybe
-    ( catMaybes, fromJust, isJust, mapMaybe )
+    ( catMaybes, fromJust )
 import Data.Ord
     ( Down (..) )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Quantity
     ( Quantity (..) )
-import Data.Text
-    ( Text )
-import Data.Text.Class
-    ( ToText (..), fromText )
 import Data.Type.Equality
     ( type (==) )
-import Data.Typeable
-    ( Typeable )
 import Data.Word
-    ( Word16, Word32 )
+    ( Word16 )
 import Database.Persist.Class
     ( toPersistValue )
 import Database.Persist.Sql
@@ -240,16 +213,12 @@ import Database.Persist.Sqlite
     ( SqlPersistT )
 import Database.Persist.Types
     ( PersistValue (..), fromPersistValueText )
-import Fmt
-    ( pretty, (+|), (|+) )
-import GHC.Generics
-    ( Generic )
 import System.Directory
     ( doesFileExist, listDirectory )
 import System.FilePath
     ( (</>) )
 import UnliftIO.Exception
-    ( Exception, bracket, throwIO )
+    ( bracket )
 import UnliftIO.MVar
     ( MVar, modifyMVar, modifyMVar_, newMVar, readMVar, withMVar )
 

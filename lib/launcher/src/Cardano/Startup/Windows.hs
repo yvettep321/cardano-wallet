@@ -11,7 +11,7 @@ module Cardano.Startup.Windows
     , killProcess
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import System.Process
     ( Pid )

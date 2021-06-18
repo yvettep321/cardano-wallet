@@ -39,7 +39,7 @@ module Cardano.Wallet.Shelley.Compatibility.Ledger
 
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Crypto.Hash
     ( hashFromBytes, hashToBytes )

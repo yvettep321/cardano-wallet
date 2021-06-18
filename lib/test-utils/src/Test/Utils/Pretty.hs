@@ -5,7 +5,7 @@ module Test.Utils.Pretty
     , pShowBuilder
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Data.Text.Class
     ( ToText (..) )

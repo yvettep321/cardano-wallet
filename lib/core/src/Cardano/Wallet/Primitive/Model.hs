@@ -50,7 +50,7 @@ module Cardano.Wallet.Primitive.Model
     , utxo
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.AddressDiscovery
     ( IsOurs (..) )

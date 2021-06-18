@@ -15,6 +15,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+{-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
+
 {- HLINT ignore "Redundant flip" -}
 
 -- |
@@ -51,18 +53,15 @@ module Cardano.DB.Sqlite
     , DBLog (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Wallet.Logging
-    ( BracketLog, bracketTracer )
-import Control.Monad
-    ( join, void, when )
-import Control.Monad.IO.Unlift
-    ( MonadUnliftIO (..) )
+    ( BracketLog
+    , HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    , Severity (..)
+    , bracketTracer
+    )
 import Control.Monad.Logger
     ( LogLevel (..) )
 import Control.Retry
@@ -72,26 +71,14 @@ import Control.Retry
     , logRetries
     , recovering
     )
-import Control.Tracer
-    ( Tracer, contramap, traceWith )
 import Data.Aeson
     ( ToJSON (..) )
-import Data.Function
-    ( (&) )
-import Data.Functor
-    ( (<&>) )
 import Data.List
     ( isInfixOf )
 import Data.List.Split
     ( chunksOf )
 import Data.Pool
     ( Pool, createPool, destroyAllResources, withResource )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Text
-    ( Text )
-import Data.Text.Class
-    ( ToText (..) )
 import Data.Time.Clock
     ( NominalDiffTime )
 import Database.Persist.EntityDef
@@ -115,10 +102,6 @@ import Database.Persist.Sqlite
     ( SqlBackend, SqlPersistT, wrapConnection )
 import Database.Sqlite
     ( Error (ErrorConstraint), SqliteException (SqliteException) )
-import Fmt
-    ( fmt, ordinalF, (+|), (+||), (|+), (||+) )
-import GHC.Generics
-    ( Generic )
 import System.Environment
     ( lookupEnv )
 import System.Log.FastLogger
@@ -126,7 +109,7 @@ import System.Log.FastLogger
 import UnliftIO.Compat
     ( handleIf )
 import UnliftIO.Exception
-    ( Exception, bracket, bracket_, handleJust, tryJust )
+    ( bracket, bracket_, handleJust, tryJust )
 import UnliftIO.MVar
     ( newMVar, withMVarMasked )
 
@@ -299,7 +282,7 @@ retryOnBusy
     -> IO a
 retryOnBusy tr timeout action = recovering policy
     [logRetries isBusy traceRetries]
-    (\st -> action <* trace MsgRetryDone st)
+    (\st -> action <* traceRetry MsgRetryDone st)
   where
     policy = limitRetriesByCumulativeDelay usTimeout $ constantDelay (25*ms)
     usTimeout = truncate (timeout * 1_000_000)
@@ -307,9 +290,9 @@ retryOnBusy tr timeout action = recovering policy
 
     isBusy (SqliteException name _ _) = pure (name == Sqlite.ErrorBusy)
 
-    traceRetries retr _ = trace $ if retr then MsgRetry else MsgRetryGaveUp
+    traceRetries retr _ = traceRetry $ if retr then MsgRetry else MsgRetryGaveUp
 
-    trace m RetryStatus{rsIterNumber} = traceWith tr $
+    traceRetry m RetryStatus{rsIterNumber} = traceWith tr $
         MsgRetryOnBusy rsIterNumber m
 
 -- | Run the given task in a context where foreign key constraints are
@@ -368,8 +351,8 @@ updateForeignKeysSetting
     -> Sqlite.Connection
     -> ForeignKeysSetting
     -> IO ()
-updateForeignKeysSetting trace connection desiredValue = do
-    traceWith trace $ MsgUpdatingForeignKeysSetting desiredValue
+updateForeignKeysSetting tr connection desiredValue = do
+    traceWith tr $ MsgUpdatingForeignKeysSetting desiredValue
     query <- Sqlite.prepare connection $
         "PRAGMA foreign_keys = " <> valueToWrite <> ";"
     _ <- Sqlite.step query

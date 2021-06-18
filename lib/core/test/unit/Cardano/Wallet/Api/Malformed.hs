@@ -47,7 +47,7 @@ module Cardano.Wallet.Api.Malformed
     , malformed
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Api.Types
     ( ApiAddressData
@@ -92,20 +92,12 @@ import Cardano.Wallet.Primitive.Types.TokenPolicy
     ( TokenName, TokenPolicyId )
 import Cardano.Wallet.Primitive.Types.Tx
     ( SerialisedTx )
-import Control.Arrow
-    ( first )
 import Data.Aeson.QQ
     ( aesonQQ )
 import Data.ByteString.Lazy
     ( ByteString )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.String
     ( IsString )
-import Data.Text
-    ( Text )
-import Data.Typeable
-    ( Typeable )
 import GHC.TypeLits
     ( Symbol )
 import Servant

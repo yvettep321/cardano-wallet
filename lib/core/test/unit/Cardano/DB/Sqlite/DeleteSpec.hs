@@ -6,7 +6,7 @@
 
 module Cardano.DB.Sqlite.DeleteSpec (spec) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.DB.Sqlite.Delete
     ( newRefCount, waitForFree', withRef )

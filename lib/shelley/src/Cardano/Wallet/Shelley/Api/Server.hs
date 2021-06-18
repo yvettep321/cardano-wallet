@@ -17,7 +17,7 @@ module Cardano.Wallet.Shelley.Api.Server
     ( server
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 
 import Cardano.Address
@@ -174,24 +174,14 @@ import Cardano.Wallet.Shelley.Pools
     ( StakePoolLayer (..) )
 import Control.Applicative
     ( liftA2 )
-import Control.Monad
-    ( when )
-import Control.Monad.IO.Class
-    ( liftIO )
 import Control.Monad.Trans.Except
     ( except, throwE, withExceptT )
-import Data.Coerce
-    ( coerce )
-import Data.Generics.Internal.VL.Lens
-    ( (^.) )
 import Data.Generics.Labels
     ()
 import Data.List
     ( sortOn )
 import Data.Maybe
     ( fromJust )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.Text.Class
     ( TextDecodingError (..) )
 import Network.Ntp
@@ -200,8 +190,6 @@ import Servant
     ( (:<|>) (..), Handler (..), NoContent (..), Server, err400 )
 import Servant.Server
     ( ServerError (..) )
-import Type.Reflection
-    ( Typeable )
 
 import qualified Cardano.Address.Derivation as CA
 import qualified Cardano.Address.Script as CA

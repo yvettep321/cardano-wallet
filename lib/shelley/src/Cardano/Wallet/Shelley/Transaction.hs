@@ -44,7 +44,7 @@ module Cardano.Wallet.Shelley.Transaction
     , txConstraints
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, toXPub )
@@ -144,19 +144,11 @@ import Cardano.Wallet.Transaction
     , withdrawalToCoin
     )
 import Control.Arrow
-    ( first, left, second )
-import Control.Monad
-    ( forM )
+    ( left )
 import Data.ByteString
     ( ByteString )
-import Data.Function
-    ( (&) )
-import Data.Generics.Internal.VL.Lens
-    ( view )
 import Data.Generics.Labels
     ()
-import Data.Kind
-    ( Type )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Set
@@ -164,11 +156,7 @@ import Data.Set
 import Data.Type.Equality
     ( type (==) )
 import Data.Word
-    ( Word16, Word64, Word8 )
-import Fmt
-    ( Buildable, pretty )
-import GHC.Stack
-    ( HasCallStack )
+    ( Word16 )
 import Ouroboros.Network.Block
     ( SlotNo )
 
@@ -568,8 +556,8 @@ _initSelectionCriteria pp ctx utxoAvailable outputsUnprepared
         prepareOutputsWith (_calcMinimumCoinValue pp) outputsUnprepared
 
     -- Until we properly support minting and burning, set to empty.
-    assetsToMint = TokenMap.empty
-    assetsToBurn = TokenMap.empty
+    assetsToMint = mempty
+    assetsToBurn = mempty
 
 dummySkeleton :: Int -> [TxOut] -> SelectionSkeleton
 dummySkeleton inputCount outputs = SelectionSkeleton

@@ -2,7 +2,7 @@ module Data.Time.TextSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( forM_ )

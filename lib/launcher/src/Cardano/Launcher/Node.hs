@@ -18,7 +18,7 @@ module Cardano.Launcher.Node
     , isWindows
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Launcher
     ( LauncherLog, ProcessHasExited, withBackendCreateProcess )

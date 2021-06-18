@@ -1,3 +1,4 @@
+cabal-version:       3.0
 name:                cardano-wallet-launcher
 version:             2021.7.30
 synopsis:            Utilities for a building commands launcher
@@ -8,29 +9,38 @@ copyright:           2018-2020 IOHK
 license:             Apache-2.0
 category:            Web
 build-type:          Simple
-cabal-version:       >=1.10
 
 flag release
     description: Enable optimization and `-Werror`
     default: False
     manual: True
 
-library
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -Wall
-      -Wcompat
-      -fwarn-redundant-constraints
+common base
+  build-depends: base >= 4.14 && < 4.15
+               , cardano-wallet-base
+
+common project-config
+  default-language:     Haskell2010
+  default-extensions:   NoImplicitPrelude
+                        OverloadedStrings
+
+  ghc-options:          -Wall
+                        -Wcompat
+                        -Wredundant-constraints
+                        -Wincomplete-record-updates
+                        -Wpartial-fields
+                        -Wunused-packages
+
   if (flag(release))
-    ghc-options:
-      -Werror
+    ghc-options:       -O2 -Werror
+
+common exe
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -with-rtsopts=-T
+
+library
+  import: base, project-config
   build-depends:
-      base
-    , bytestring
+      bytestring
     , code-page
     , contra-tracer
     , either
@@ -40,7 +50,7 @@ library
     , iohk-monitoring
     , process
     , text
-    , text-class
+    , cardano-wallet-text-class
     , unliftio
     , unliftio-core
   hs-source-dirs:
@@ -58,20 +68,9 @@ library
     other-modules: Cardano.Startup.POSIX
 
 test-suite unit
-  default-language:
-      Haskell2010
-  default-extensions:
-      NoImplicitPrelude
-      OverloadedStrings
-  ghc-options:
-      -threaded
-      -rtsopts
-      -Wall
-  if (flag(release))
-    ghc-options: -O2 -Werror
+  import: base, project-config, exe
   build-depends:
-      base
-    , bytestring
+      bytestring
     , cardano-wallet-launcher
     , cardano-wallet-test-utils
     , contra-tracer
@@ -83,11 +82,11 @@ test-suite unit
     , process
     , retry
     , text
-    , text-class
+    , cardano-wallet-text-class
     , time
     , unliftio
-  build-tools:
-      hspec-discover
+  build-tool-depends:
+      hspec-discover:hspec-discover
   type:
      exitcode-stdio-1.0
   hs-source-dirs:

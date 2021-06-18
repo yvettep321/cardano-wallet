@@ -17,22 +17,14 @@ module Test.Integration.Framework.Request
     , RequestException(..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Control.Monad.IO.Class
-    ( MonadIO, liftIO )
-import Control.Monad.IO.Unlift
-    ( MonadUnliftIO (..) )
 import Data.Aeson
     ( FromJSON )
 import Data.ByteString.Lazy
     ( ByteString )
-import Data.Generics.Internal.VL.Lens
-    ( (^.) )
 import Data.Generics.Product.Typed
     ( HasType, typed )
-import Data.Text
-    ( Text )
 import Network.HTTP.Client
     ( HttpException (..)
     , HttpExceptionContent
@@ -57,7 +49,7 @@ import Network.URI
 import Test.Integration.Framework.Context
     ( Context )
 import UnliftIO.Exception
-    ( Exception (..), fromEither, handle, throwIO )
+    ( fromEither, handle )
 
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8

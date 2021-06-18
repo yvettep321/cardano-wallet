@@ -23,24 +23,25 @@ module Network.Wai.Middleware.Logging
     , RequestId (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.LogItem
-    ( PrivacyAnnotation (..) )
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.BM.Tracing
     ( ToObject )
+import Cardano.Wallet.Logging
+    ( HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    , PrivacyAnnotation (..)
+    , Severity (..)
+    , Tracer
+    , contramap
+    , traceWith
+    )
 import Control.Applicative
     ( (<|>) )
-import Control.Arrow
-    ( second )
-import Control.Tracer
-    ( Tracer, contramap, traceWith )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), Value (..) )
+import Data.Bifunctor
+    ( second )
 import Data.ByteString
     ( ByteString )
 import Data.ByteString.Builder

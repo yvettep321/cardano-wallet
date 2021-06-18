@@ -23,7 +23,7 @@
 
 module Main where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.Severity
     ( Severity (..) )

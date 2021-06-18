@@ -35,7 +35,7 @@ module Cardano.Wallet.DB.SqliteSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Configuration.Static
     ( defaultConfigTesting )
@@ -282,10 +282,7 @@ spec = parallel $ do
 
 stateMachineSpec
     :: forall k s.
-        ( WalletKey k
-        , PersistPrivateKey (k 'RootK)
-        , PaymentAddress 'Mainnet k
-        , PersistState s
+        ( PersistState s
         , TestConstraints s k
         , Typeable s
         )
@@ -340,7 +337,7 @@ loggingSpec = withLoggingDB @(SeqState 'Mainnet ShelleyKey) $ do
             length msgs `shouldBe` count * 2
 
 withLoggingDB
-    :: (Show s, PersistState s)
+    :: PersistState s
     => SpecWith (IO [DBLog], DBLayer IO s ShelleyKey)
     -> Spec
 withLoggingDB = around f . beforeWith clean
@@ -932,10 +929,6 @@ testMigrationTxMetaFee
     :: forall k s.
         ( s ~ SeqState 'Mainnet k
         , k ~ ShelleyKey
-        , WalletKey k
-        , PersistState s
-        , PersistPrivateKey (k 'RootK)
-        , PaymentAddress 'Mainnet k
         )
     => String
     -> Int
@@ -1032,7 +1025,6 @@ testMigrationRole
         , PersistPrivateKey (k 'RootK)
         , PaymentAddress 'Mainnet k
         , GetPurpose k
-        , Show s
         )
     => String
     -> IO ()
@@ -1063,7 +1055,6 @@ testMigrationSeqStateDerivationPrefix
         , WalletKey k
         , PersistState s
         , PersistPrivateKey (k 'RootK)
-        , Show s
         )
     => String
     -> ( Index 'Hardened 'PurposeK

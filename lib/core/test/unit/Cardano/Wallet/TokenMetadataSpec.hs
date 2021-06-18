@@ -6,7 +6,7 @@ module Cardano.Wallet.TokenMetadataSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
@@ -36,10 +36,6 @@ import Cardano.Wallet.Unsafe
     ( unsafeFromBase64, unsafeFromHex, unsafeFromText )
 import Data.Aeson
     ( Value (..), eitherDecodeFileStrict )
-import Data.Either
-    ( isRight )
-import Data.Maybe
-    ( isNothing )
 import Network.URI
     ( parseURI )
 import System.FilePath

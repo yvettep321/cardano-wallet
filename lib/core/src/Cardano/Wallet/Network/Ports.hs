@@ -26,7 +26,7 @@ module Cardano.Wallet.Network.Ports
     , randomUnusedTCPPorts
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.Monad
     ( filterM )

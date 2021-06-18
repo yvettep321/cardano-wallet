@@ -13,7 +13,7 @@ module Cardano.Wallet.Primitive.Types.RewardAccount
     ( RewardAccount (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )

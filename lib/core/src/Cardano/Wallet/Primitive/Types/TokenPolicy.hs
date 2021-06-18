@@ -36,7 +36,7 @@ module Cardano.Wallet.Primitive.Types.TokenPolicy
     , validateMetadataLogo
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )

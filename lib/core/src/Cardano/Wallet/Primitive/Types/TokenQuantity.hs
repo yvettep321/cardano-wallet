@@ -31,10 +31,10 @@ module Cardano.Wallet.Primitive.Types.TokenQuantity
 
     ) where
 
-import Prelude hiding
+import Cardano.Wallet.Prelude hiding
     ( pred, subtract, succ )
 
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( equipartitionNatural, partitionNatural )
 import Control.DeepSeq
     ( NFData (..) )

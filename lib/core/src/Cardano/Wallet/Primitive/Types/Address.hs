@@ -13,7 +13,7 @@ module Cardano.Wallet.Primitive.Types.Address
     , AddressState (..)
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Control.DeepSeq
     ( NFData (..) )

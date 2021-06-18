@@ -12,7 +12,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Cardano.Wallet.Primitive.Delegation.StateSpec where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPub )
@@ -53,8 +53,6 @@ import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Primitive.Types.Tx
     ( TxIn (..), TxOut (..) )
-import Control.Arrow
-    ( first )
 import Crypto.Hash.Utils
     ( blake2b224 )
 import Data.Map
@@ -62,19 +60,7 @@ import Data.Map
 import Data.Set
     ( Set )
 import Fmt
-    ( Buildable (..)
-    , Builder
-    , blockListF
-    , blockListF'
-    , blockMapF
-    , fmt
-    , listF
-    , listF'
-    , mapF'
-    , pretty
-    )
-import GHC.Generics
-    ( Generic )
+    ( Builder, blockListF', blockMapF, listF, listF', mapF' )
 import Test.Hspec
     ( Spec, describe, it, shouldBe )
 import Test.QuickCheck

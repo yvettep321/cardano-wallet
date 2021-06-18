@@ -36,12 +36,32 @@ module Cardano.Wallet.Logging
 
       -- * Combinators
     , flatContramapTracer
+
+      -- * Re-exports from iohk-monitoring
+    , Severity (..)
+    , PrivacyAnnotation (..)
+    , HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    , Trace
+
+      -- * Re-exports from contra-tracer
+    , Tracer (..)
+    , contramap
+    , contramapM
+    , natTracer
+    , nullTracer
+    , traceWith
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.BM.Data.LogItem
-    ( LOContent (..), LogObject (..), LoggerName, mkLOMeta )
+    ( LOContent (..)
+    , LogObject (..)
+    , LoggerName
+    , PrivacyAnnotation (..)
+    , mkLOMeta
+    )
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
@@ -60,7 +80,7 @@ import Control.Monad.IO.Unlift
 import Control.Monad.Trans.Except
     ( ExceptT (..) )
 import Control.Tracer
-    ( Tracer (..), contramap, natTracer, nullTracer, traceWith )
+    ( Tracer (..), contramap, contramapM, natTracer, nullTracer, traceWith )
 import Control.Tracer.Transformers.ObserveOutcome
     ( Outcome (..)
     , OutcomeFidelity (..)

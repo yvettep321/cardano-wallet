@@ -43,18 +43,16 @@ module Ouroboros.Network.Client.Wallet
     , mapChainSyncLog
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Slotting.Slot
     ( WithOrigin (..) )
+import Cardano.Wallet.Logging
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..), Severity (..) )
 import Cardano.Wallet.Network
     ( NextBlocksResult (..) )
 import Control.Monad
-    ( ap, liftM, unless )
+    ( ap, liftM )
 import Control.Monad.Class.MonadSTM
     ( MonadSTM
     , TQueue
@@ -69,24 +67,10 @@ import Control.Monad.Class.MonadSTM
     )
 import Control.Monad.Class.MonadThrow
     ( MonadThrow )
-import Control.Monad.IO.Class
-    ( MonadIO )
-import Control.Tracer
-    ( Tracer, traceWith )
-import Data.Functor
-    ( (<&>) )
-import Data.Kind
-    ( Type )
-import Data.Maybe
-    ( isNothing )
-import Data.Text.Class
-    ( ToText (..) )
 import Data.Void
     ( Void )
 import Network.TypedProtocol.Pipelined
     ( N (..), Nat (..), natToInt )
-import Numeric.Natural
-    ( Natural )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( BlockQuery )
 import Ouroboros.Consensus.Ledger.Query

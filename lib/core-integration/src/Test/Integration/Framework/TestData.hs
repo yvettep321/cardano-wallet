@@ -98,7 +98,7 @@ module Test.Integration.Framework.TestData
     , errMsg403InvalidConstructTx
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Api.Types
     ( ApiAssetMetadata (ApiAssetMetadata), ApiT (..) )
@@ -115,11 +115,7 @@ import Cardano.Wallet.Unsafe
 import Cardano.Wallet.Version
     ( gitRevision, showFullVersion, version )
 import Data.Text
-    ( Text, pack, unpack )
-import Data.Word
-    ( Word32 )
-import Fmt
-    ( pretty )
+    ( pack, unpack )
 import Test.Integration.Framework.DSL
     ( Payload (..), fixturePassphrase, json )
 

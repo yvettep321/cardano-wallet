@@ -9,7 +9,7 @@ module Cardano.Wallet.Primitive.Types.UTxOIndexSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Wallet.Primitive.Types.TokenMap
     ( AssetId )
@@ -185,7 +185,7 @@ prop_shrink_invariant :: UTxOIndex -> Property
 prop_shrink_invariant = conjoin . fmap invariantHolds . shrink
 
 prop_empty_invariant :: Property
-prop_empty_invariant = invariantHolds UTxOIndex.empty
+prop_empty_invariant = invariantHolds mempty
 
 prop_singleton_invariant :: TxIn -> TxOut -> Property
 prop_singleton_invariant i o = invariantHolds $ UTxOIndex.singleton i o
@@ -214,7 +214,7 @@ prop_selectRandom_invariant i f = monadicIO $ do
 
 prop_empty_toList :: Property
 prop_empty_toList =
-    UTxOIndex.toList UTxOIndex.empty === []
+    UTxOIndex.toList mempty === []
 
 prop_singleton_toList :: TxIn -> TxOut -> Property
 prop_singleton_toList i o =
@@ -357,7 +357,7 @@ prop_SelectionFilter_coverage selectionFilter = checkCoverage $ property
 --
 prop_selectRandom_empty :: SelectionFilter -> Property
 prop_selectRandom_empty f = monadicIO $ do
-    result <- run $ UTxOIndex.selectRandom UTxOIndex.empty f
+    result <- run $ UTxOIndex.selectRandom mempty f
     assert $ isNothing result
 
 -- | Attempt to select a random entry from a singleton index with entry 'e'.
@@ -372,17 +372,17 @@ prop_selectRandom_singleton selectionFilter i o = monadicIO $ do
     index = UTxOIndex.singleton i o
     expected = case selectionFilter of
         Any ->
-            Just ((i, o), UTxOIndex.empty)
+            Just ((i, o), mempty)
         WithAdaOnly | txOutIsAdaOnly o ->
-            Just ((i, o), UTxOIndex.empty)
+            Just ((i, o), mempty)
         WithAdaOnly ->
             Nothing
         WithAsset a | txOutHasAsset o a ->
-            Just ((i, o), UTxOIndex.empty)
+            Just ((i, o), mempty)
         WithAsset _ ->
             Nothing
         WithAssetOnly a | txOutHasAssetOnly o a ->
-            Just ((i, o), UTxOIndex.empty)
+            Just ((i, o), mempty)
         WithAssetOnly _ ->
             Nothing
 

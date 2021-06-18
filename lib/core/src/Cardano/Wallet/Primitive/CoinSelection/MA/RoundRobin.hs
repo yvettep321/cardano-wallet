@@ -93,16 +93,16 @@ module Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
 
     -- * Utility functions
     , distance
-    , mapMaybe
+    , mapMaybeNE
     , balanceMissing
     , missingOutputAssets
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Algebra.PartialOrd
     ( PartialOrd (..) )
-import Cardano.Numeric.Util
+import Cardano.Wallet.Numeric
     ( padCoalesce )
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..), addCoin, subtractCoin, sumCoins )
@@ -539,7 +539,7 @@ performSelection minCoinFor costFor bundleSizeAssessor criteria
 
     insufficientMinCoinValues :: [InsufficientMinCoinValueError]
     insufficientMinCoinValues =
-        mapMaybe mkInsufficientMinCoinValueError outputsToCover
+        mapMaybeNE mkInsufficientMinCoinValueError outputsToCover
       where
         mkInsufficientMinCoinValueError
             :: TxOut
@@ -871,7 +871,7 @@ runSelection limit mExtraCoinSource available minimumBalance =
   where
     initialState :: SelectionState
     initialState = SelectionState
-        { selected = UTxOIndex.empty
+        { selected = mempty
         , leftover = available
         }
 
@@ -1190,9 +1190,8 @@ makeChange criteria
     -- original set of user-specified outputs ('outputsToCover').
     changeForUserSpecifiedAssets :: NonEmpty TokenMap
     changeForUserSpecifiedAssets = F.foldr
-        (NE.zipWith (<>)
-            . makeChangeForUserSpecifiedAsset outputMaps)
-        (TokenMap.empty <$ outputMaps)
+        (NE.zipWith (<>) . makeChangeForUserSpecifiedAsset outputMaps)
+        (mempty <$ outputMaps)
         excessAssets
 
     -- Change for non-user-specified assets: assets that were not present
@@ -1480,7 +1479,7 @@ makeChangeForNonUserSpecifiedAssets
 makeChangeForNonUserSpecifiedAssets n nonUserSpecifiedAssetQuantities =
     F.foldr
         (NE.zipWith (<>) . makeChangeForNonUserSpecifiedAsset n)
-        (TokenMap.empty <$ n)
+        (mempty <$ n)
         (Map.toList nonUserSpecifiedAssetQuantities)
 
 -- | Constructs a list of ada change outputs based on the given distribution.
@@ -1873,7 +1872,7 @@ coinQuantity index extraSource =
 fullBalance :: UTxOIndex -> Maybe Coin -> TokenBundle
 fullBalance index extraSource
     | UTxOIndex.null index =
-        TokenBundle.empty
+        mempty
     | otherwise =
         view #balance index <> F.foldMap TokenBundle.fromCoin extraSource
 
@@ -1915,8 +1914,8 @@ distance a b
     | a < b = b - a
     | otherwise = 0
 
-mapMaybe :: (a -> Maybe b) -> NonEmpty a -> [b]
-mapMaybe predicate (x :| xs) = go (x:xs)
+mapMaybeNE :: (a -> Maybe b) -> NonEmpty a -> [b]
+mapMaybeNE predicate (x :| xs) = go (x:xs)
   where
     go   []   = []
     go (a:as) =

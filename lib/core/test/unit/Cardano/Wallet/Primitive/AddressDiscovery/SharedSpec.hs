@@ -13,7 +13,7 @@ module Cardano.Wallet.Primitive.AddressDiscovery.SharedSpec
     ( spec
     ) where
 
-import Prelude
+import Cardano.Wallet.Prelude
 
 import Cardano.Address.Derivation
     ( XPrv, XPub )
@@ -52,14 +52,6 @@ import Cardano.Wallet.Primitive.Types.Address
     ( AddressState (..) )
 import Cardano.Wallet.Unsafe
     ( someDummyMnemonic )
-import Data.Either
-    ( isRight )
-import Data.Maybe
-    ( isJust )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Word
-    ( Word32 )
 import Test.Hspec
     ( Spec, describe, it )
 import Test.QuickCheck
@@ -75,8 +67,6 @@ import Test.QuickCheck
     , (===)
     , (==>)
     )
-import Type.Reflection
-    ( Typeable )
 
 import qualified Data.List as L
 import qualified Data.Map.Strict as Map
