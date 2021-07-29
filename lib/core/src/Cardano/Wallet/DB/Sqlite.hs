@@ -147,6 +147,8 @@ import Cardano.Wallet.Primitive.AddressDiscovery
     ( GetPurpose )
 import Cardano.Wallet.Primitive.AddressDiscovery.Shared
     ( CredentialType (..) )
+import Cardano.Wallet.Primitive.Passphrase
+    ( PassphraseHash )
 import Cardano.Wallet.Primitive.Slotting
     ( TimeInterpreter
     , epochOf
@@ -258,6 +260,7 @@ import qualified Cardano.Wallet.Primitive.AddressDiscovery.Random as Rnd
 import qualified Cardano.Wallet.Primitive.AddressDiscovery.Sequential as Seq
 import qualified Cardano.Wallet.Primitive.AddressDiscovery.Shared as Shared
 import qualified Cardano.Wallet.Primitive.Model as W
+import qualified Cardano.Wallet.Primitive.Passphrase as W
 import qualified Cardano.Wallet.Primitive.Types as W
 import qualified Cardano.Wallet.Primitive.Types.Address as W
 import qualified Cardano.Wallet.Primitive.Types.Coin as W
@@ -1716,7 +1719,7 @@ metadataFromEntity walDelegation wal = W.WalletMetadata
 mkPrivateKeyEntity
     :: PersistPrivateKey (k 'RootK)
     => W.WalletId
-    -> (k 'RootK XPrv, W.Hash "encryption")
+    -> (k 'RootK XPrv, W.PassphraseHash)
     -> PrivateKey
 mkPrivateKeyEntity wid kh = PrivateKey
     { privateKeyWalletId = wid
@@ -1729,7 +1732,7 @@ mkPrivateKeyEntity wid kh = PrivateKey
 privateKeyFromEntity
     :: PersistPrivateKey (k 'RootK)
     => PrivateKey
-    -> (k 'RootK XPrv, W.Hash "encryption")
+    -> (k 'RootK XPrv, PassphraseHash)
 privateKeyFromEntity (PrivateKey _ k h) =
     unsafeDeserializeXPrv (k, h)
 
@@ -2351,7 +2354,7 @@ updatePendingTxForExpiryQuery wid tip = do
 selectPrivateKey
     :: (MonadIO m, PersistPrivateKey (k 'RootK))
     => W.WalletId
-    -> SqlPersistT m (Maybe (k 'RootK XPrv, W.Hash "encryption"))
+    -> SqlPersistT m (Maybe (k 'RootK XPrv, PassphraseHash))
 selectPrivateKey wid = do
     keys <- selectFirst [PrivateKeyWalletId ==. wid] []
     pure $ (privateKeyFromEntity . entityVal) <$> keys

@@ -409,8 +409,8 @@ spec = describe "SHELLEY_WALLETS" $ do
             verify r [ expectResponseCode HTTP.status201 ]
 
     describe "WALLETS_CREATE_07 - Passphrase" $ do
-        let minLength = passphraseMinLength (Proxy @"raw")
-        let maxLength = passphraseMaxLength (Proxy @"raw")
+        let minLength = passphraseMinLength (Proxy @"user")
+        let maxLength = passphraseMaxLength (Proxy @"user")
         let matrix =
                 [ ( show minLength ++ " char long"
                   , T.pack (replicate minLength 'ź') )
@@ -766,8 +766,8 @@ spec = describe "SHELLEY_WALLETS" $ do
         expectField #passphrase (`shouldNotBe` originalPassUpdateDateTime) rg
 
     describe "WALLETS_UPDATE_PASS_02 - New passphrase values" $ do
-        let minLength = passphraseMinLength (Proxy @"raw")
-        let maxLength = passphraseMaxLength (Proxy @"raw")
+        let minLength = passphraseMinLength (Proxy @"user")
+        let maxLength = passphraseMaxLength (Proxy @"user")
         let matrix =
                 [ ( show minLength ++ " char long"
                   , T.pack (replicate minLength 'ź')
@@ -813,8 +813,8 @@ spec = describe "SHELLEY_WALLETS" $ do
 
     describe "WALLETS_UPDATE_PASS_03 - Can update pass from pass that's boundary\
     \ value" $ do
-        let minLength = passphraseMinLength (Proxy @"raw")
-        let maxLength = passphraseMaxLength (Proxy @"raw")
+        let minLength = passphraseMinLength (Proxy @"user")
+        let maxLength = passphraseMaxLength (Proxy @"user")
         let matrix =
                 [ ( show minLength ++ " char long"
                   , T.pack (replicate minLength 'ź') )
@@ -834,7 +834,7 @@ spec = describe "SHELLEY_WALLETS" $ do
                      "passphrase": #{oldPass}
                      } |]
             w <- unsafeResponse <$> postWallet ctx createPayload
-            let len = passphraseMaxLength (Proxy @"raw")
+            let len = passphraseMaxLength (Proxy @"user")
             let newPass = T.pack $ replicate len '💘'
             let payload = updatePassPayload oldPass newPass
             rup <- request @ApiWallet ctx

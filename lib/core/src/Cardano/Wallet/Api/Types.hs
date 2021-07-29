@@ -251,9 +251,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , DerivationIndex (..)
     , Index (..)
     , NetworkDiscriminant (..)
-    , Passphrase (..)
-    , PassphraseMaxLength (..)
-    , PassphraseMinLength (..)
     , Role (..)
     , fromHex
     , hex
@@ -262,6 +259,12 @@ import Cardano.Wallet.Primitive.AddressDiscovery.Random
     ( RndState )
 import Cardano.Wallet.Primitive.AddressDiscovery.Sequential
     ( AddressPoolGap, SeqState, getAddressPoolGap )
+import Cardano.Wallet.Primitive.Passphrase.Types
+    ( Passphrase (..)
+    , PassphraseHash (..)
+    , PassphraseMaxLength (..)
+    , PassphraseMinLength (..)
+    )
 import Cardano.Wallet.Primitive.Slotting
     ( Qry, timeOfEpoch )
 import Cardano.Wallet.Primitive.SyncProgress
@@ -805,7 +808,7 @@ data WalletPostData = WalletPostData
     , mnemonicSentence :: !(ApiMnemonicT (AllowedMnemonics 'Shelley))
     , mnemonicSecondFactor :: !(Maybe (ApiMnemonicT (AllowedMnemonics 'SndFactor)))
     , name :: !(ApiT WalletName)
-    , passphrase :: !(ApiT (Passphrase "raw"))
+    , passphrase :: !(ApiT (Passphrase "user"))
     } deriving (Eq, Generic, Show)
 
 data SomeByronWalletPostData
@@ -820,7 +823,7 @@ data SomeByronWalletPostData
 data ByronWalletPostData mw = ByronWalletPostData
     { mnemonicSentence :: !(ApiMnemonicT mw)
     , name :: !(ApiT WalletName)
-    , passphrase :: !(ApiT (Passphrase "raw"))
+    , passphrase :: !(ApiT (Passphrase "user"))
     } deriving (Eq, Generic, Show)
 
 data ByronWalletFromXPrvPostData = ByronWalletFromXPrvPostData
@@ -828,7 +831,7 @@ data ByronWalletFromXPrvPostData = ByronWalletFromXPrvPostData
     , encryptedRootPrivateKey :: !(ApiT XPrv)
     -- ^ A root private key hex-encoded, encrypted using a given passphrase.
     -- The underlying key should contain: private key, chain code, and public key
-    , passphraseHash :: !(ApiT (Hash "encryption"))
+    , passphraseHash :: !(ApiT PassphraseHash)
     -- ^ A hash of master passphrase. The hash should be an output of a
     -- Scrypt function with the following parameters:
     -- - logN = 14
@@ -869,13 +872,13 @@ newtype SettingsPutData = SettingsPutData
     deriving Show via (Quiet SettingsPutData)
 
 data WalletPutPassphraseData = WalletPutPassphraseData
-    { oldPassphrase :: !(ApiT (Passphrase "raw"))
-    , newPassphrase :: !(ApiT (Passphrase "raw"))
+    { oldPassphrase :: !(ApiT (Passphrase "user"))
+    , newPassphrase :: !(ApiT (Passphrase "user"))
     } deriving (Eq, Generic, Show)
 
 data ByronWalletPutPassphraseData = ByronWalletPutPassphraseData
     { oldPassphrase :: !(Maybe (ApiT (Passphrase "lenient")))
-    , newPassphrase :: !(ApiT (Passphrase "raw"))
+    , newPassphrase :: !(ApiT (Passphrase "user"))
     } deriving (Eq, Generic, Show)
 
 data ApiConstructTransaction (n :: NetworkDiscriminant) = ApiConstructTransaction
@@ -1320,13 +1323,13 @@ instance FromHttpApiData KeyFormat where
     parseUrlPiece = first (T.pack . getTextDecodingError) . fromText
 
 data ApiPostAccountKeyData = ApiPostAccountKeyData
-    { passphrase :: ApiT (Passphrase "raw")
+    { passphrase :: ApiT (Passphrase "user")
     , format :: KeyFormat
     } deriving (Eq, Generic, Show)
       deriving anyclass NFData
 
 data ApiPostAccountKeyDataWithPurpose = ApiPostAccountKeyDataWithPurpose
-    { passphrase :: ApiT (Passphrase "raw")
+    { passphrase :: ApiT (Passphrase "user")
     , format :: KeyFormat
     , purpose :: Maybe (ApiT DerivationIndex)
     } deriving (Eq, Generic, Show)
@@ -1358,7 +1361,7 @@ data ApiSharedWalletPostDataFromMnemonics = ApiSharedWalletPostDataFromMnemonics
     { name :: !(ApiT WalletName)
     , mnemonicSentence :: !(ApiMnemonicT (AllowedMnemonics 'Shelley))
     , mnemonicSecondFactor :: !(Maybe (ApiMnemonicT (AllowedMnemonics 'SndFactor)))
-    , passphrase :: !(ApiT (Passphrase "raw"))
+    , passphrase :: !(ApiT (Passphrase "user"))
     , accountIndex :: !(ApiT DerivationIndex)
     , paymentScriptTemplate :: !ApiScriptTemplateEntry
     , delegationScriptTemplate :: !(Maybe ApiScriptTemplateEntry)
@@ -1597,9 +1600,9 @@ instance ToText (ApiT XPrv) where
         . CC.unXPrv
         . getApiT
 
-instance FromText (ApiT (Hash "encryption"))  where
+instance FromText (ApiT PassphraseHash)  where
     fromText txt = case convertFromBase Base16 $ T.encodeUtf8 txt of
-        Right bytes -> Right $ ApiT $ Hash bytes
+        Right bytes -> Right $ ApiT $ PassphraseHash bytes
         Left _ -> textDecodingError
       where
         textDecodingError = Left $ TextDecodingError $ unwords
@@ -2258,9 +2261,9 @@ instance MkSomeMnemonic mw => FromJSON (ByronWalletPostData mw) where
 instance ToJSON (ByronWalletPostData mw) where
     toJSON = genericToJSON defaultRecordTypeOptions
 
-instance FromJSON (ApiT (Hash "encryption")) where
+instance FromJSON (ApiT PassphraseHash) where
     parseJSON = parseJSON >=> eitherToParser . first ShowFmt . fromText
-instance ToJSON (ApiT (Hash "encryption")) where
+instance ToJSON (ApiT PassphraseHash) where
     toJSON = toTextJSON
 
 instance FromJSON (ApiT XPrv) where

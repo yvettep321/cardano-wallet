@@ -71,7 +71,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , KeyFingerprint (..)
     , MkKeyFingerprint (..)
     , NetworkDiscriminant (..)
-    , Passphrase
     , Role (..)
     , SoftDerivation
     , WalletKey (..)
@@ -100,6 +99,8 @@ import Cardano.Wallet.Primitive.AddressDiscovery.Sequential
     , lookupAddress
     , mkAddressPool
     )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..), AddressState (..) )
 import Cardano.Wallet.Primitive.Types.RewardAccount

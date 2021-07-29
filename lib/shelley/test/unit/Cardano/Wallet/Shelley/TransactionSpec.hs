@@ -33,14 +33,7 @@ import Cardano.Wallet
 import Cardano.Wallet.Gen
     ( genScript )
 import Cardano.Wallet.Primitive.AddressDerivation
-    ( DerivationIndex (..)
-    , Passphrase (..)
-    , PassphraseMaxLength (..)
-    , PassphraseMinLength (..)
-    , PassphraseScheme (..)
-    , hex
-    , preparePassphrase
-    )
+    ( DerivationIndex (..), hex )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
     ( ByronKey )
 import Cardano.Wallet.Primitive.AddressDerivation.Icarus
@@ -53,6 +46,13 @@ import Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
     , UnableToConstructChangeError (..)
     , emptySkeleton
     , selectionDelta
+    )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase (..)
+    , PassphraseMaxLength (..)
+    , PassphraseMinLength (..)
+    , PassphraseScheme (..)
+    , preparePassphrase
     )
 import Cardano.Wallet.Primitive.Types
     ( FeePolicy (..), ProtocolParameters (..), TxParameters (..) )

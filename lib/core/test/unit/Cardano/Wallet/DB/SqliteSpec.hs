@@ -79,11 +79,9 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , DerivationType (..)
     , Index
     , NetworkDiscriminant (..)
-    , Passphrase (..)
     , PaymentAddress (..)
     , PersistPrivateKey
     , WalletKey
-    , encryptPassphrase
     )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
     ( ByronKey (..) )
@@ -119,12 +117,19 @@ import Cardano.Wallet.Primitive.Model
     , getState
     , initWallet
     )
+import Cardano.Wallet.Primitive.Passphrase
+    ( encryptPassphrase, preparePassphrase )
+import Cardano.Wallet.Primitive.Passphrase.Types
+    ( Passphrase (..)
+    , PassphraseHash (..)
+    , PassphraseScheme (..)
+    , WalletPassphraseInfo (..)
+    )
 import Cardano.Wallet.Primitive.Types
     ( ActiveSlotCoefficient (..)
     , Block (..)
     , BlockHeader (..)
     , GenesisParameters (..)
-    , PassphraseScheme (..)
     , Range
     , SlotNo (..)
     , SortOrder (..)
@@ -134,7 +139,6 @@ import Cardano.Wallet.Primitive.Types
     , WalletId (..)
     , WalletMetadata (..)
     , WalletName (..)
-    , WalletPassphraseInfo (..)
     , wholeRange
     )
 import Cardano.Wallet.Primitive.Types.Address
@@ -748,7 +752,7 @@ readTxHistory' DBLayer{..} a0 a1 a2 =
 readPrivateKey'
     :: DBLayer m s k
     -> WalletId
-    -> m (Maybe (k 'RootK XPrv, Hash "encryption"))
+    -> m (Maybe (k 'RootK XPrv, PassphraseHash))
 readPrivateKey' DBLayer{..} =
     atomically . readPrivateKey
 
@@ -756,12 +760,12 @@ readPrivateKey' DBLayer{..} =
 attachPrivateKey
     :: DBLayer IO s ShelleyKey
     -> WalletId
-    -> ExceptT ErrNoSuchWallet IO (ShelleyKey 'RootK XPrv, Hash "encryption")
+    -> ExceptT ErrNoSuchWallet IO (ShelleyKey 'RootK XPrv, PassphraseHash)
 attachPrivateKey DBLayer{..} wid = do
     let pwd = Passphrase $ BA.convert $ T.encodeUtf8 "simplevalidphrase"
     seed <- liftIO $ generate $ SomeMnemonic <$> genMnemonic @15
-    let k = generateKeyFromSeed (seed, Nothing) pwd
-    h <- liftIO $ encryptPassphrase pwd
+    (scheme, h) <- liftIO $ encryptPassphrase pwd
+    let k = generateKeyFromSeed (seed, Nothing) (preparePassphrase scheme pwd)
     mapExceptT atomically $ putPrivateKey wid (k, h)
     return (k, h)
 

@@ -293,7 +293,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , Index (..)
     , MkKeyFingerprint
     , NetworkDiscriminant (..)
-    , Passphrase (..)
     , PaymentAddress (..)
     , RewardAccount (..)
     , Role
@@ -301,7 +300,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , WalletKey (..)
     , deriveRewardAccount
     , digest
-    , preparePassphrase
     , publicKey
     )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
@@ -365,6 +363,13 @@ import Cardano.Wallet.Primitive.Model
     , getState
     , totalBalance
     )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase (..)
+    , PassphraseScheme (..)
+    , WalletPassphraseInfo (..)
+    , currentPassphraseScheme
+    , preparePassphrase
+    )
 import Cardano.Wallet.Primitive.Slotting
     ( PastHorizonException
     , RelativeTime
@@ -387,7 +392,6 @@ import Cardano.Wallet.Primitive.Types
     ( Block
     , BlockHeader (..)
     , NetworkParameters (..)
-    , PassphraseScheme (..)
     , PoolId
     , PoolLifeCycleStatus (..)
     , Signature (..)
@@ -749,7 +753,7 @@ postShelleyWallet
     -> WalletPostData
     -> Handler ApiWallet
 postShelleyWallet ctx generateKey body = do
-    let state = mkSeqStateFromRootXPrv (rootXPrv, pwd) purposeCIP1852 g
+    let state = mkSeqStateFromRootXPrv (rootXPrv, pwdP) purposeCIP1852 g
     void $ liftHandler $ createWalletWorker @_ @s @k ctx wid
         (\wrk -> W.createWallet @(WorkerCtx ctx) @_ @s @k wrk wid wName state)
         (\wrk _ -> W.manageRewardBalance @(WorkerCtx ctx) @s @k (Proxy @n) wrk wid)
@@ -759,8 +763,9 @@ postShelleyWallet ctx generateKey body = do
   where
     seed = getApiMnemonicT (body ^. #mnemonicSentence)
     secondFactor = getApiMnemonicT <$> (body ^. #mnemonicSecondFactor)
-    pwd = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = generateKey (seed, secondFactor) pwd
+    pwd = getApiT (body ^. #passphrase)
+    pwdP = preparePassphrase currentPassphraseScheme pwd
+    rootXPrv = generateKey (seed, secondFactor) pwdP
     g = maybe defaultAddressPoolGap getApiT (body ^. #addressPoolGap)
     wid = WalletId $ digest $ publicKey rootXPrv
     wName = getApiT (body ^. #name)
@@ -931,7 +936,7 @@ postSharedWalletFromRootXPrv ctx generateKey body = do
         Right _ -> pure ()
     ix' <- liftHandler $ withExceptT ErrConstructSharedWalletInvalidIndex $
         W.guardHardIndex ix
-    let state = mkSharedStateFromRootXPrv (rootXPrv, pwd) ix' g pTemplate dTemplateM
+    let state = mkSharedStateFromRootXPrv (rootXPrv, pwdP) ix' g pTemplate dTemplateM
     void $ liftHandler $ createWalletWorker @_ @s @k ctx wid
         (\wrk -> W.createWallet @(WorkerCtx ctx) @_ @s @k wrk wid wName state)
         idleWorker
@@ -939,17 +944,18 @@ postSharedWalletFromRootXPrv ctx generateKey body = do
         W.attachPrivateKeyFromPwd @_ @s @k wrk wid (rootXPrv, pwd)
     fst <$> getWallet ctx (mkSharedWallet @_ @s @k) (ApiT wid)
   where
-    seed = getApiMnemonicT (body ^. #mnemonicSentence)
-    secondFactor = getApiMnemonicT <$> (body ^. #mnemonicSecondFactor)
-    pwd = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = generateKey (seed, secondFactor) pwd
+    seed = body ^. #mnemonicSentence . #getApiMnemonicT
+    secondFactor = getApiMnemonicT <$> body ^. #mnemonicSecondFactor
+    pwdP = preparePassphrase currentPassphraseScheme pwd
+    pwd = body ^. #passphrase . #getApiT
+    rootXPrv = generateKey (seed, secondFactor) pwdP
     g = defaultAddressPoolGap
     ix = getApiT (body ^. #accountIndex)
     wid = WalletId $ digest $ publicKey rootXPrv
     pTemplate = scriptTemplateFromSelf (getRawKey accXPub) $ body ^. #paymentScriptTemplate
     dTemplateM = scriptTemplateFromSelf (getRawKey accXPub) <$> body ^. #delegationScriptTemplate
     wName = getApiT (body ^. #name)
-    accXPub = publicKey $ deriveAccountPrivateKey pwd rootXPrv (Index $ getDerivationIndex ix)
+    accXPub = publicKey $ deriveAccountPrivateKey pwdP rootXPrv (Index $ getDerivationIndex ix)
     scriptValidation = maybe RecommendedValidation getApiT (body ^. #scriptValidation)
 
 postSharedWalletFromAccountXPub
@@ -1099,7 +1105,7 @@ postLegacyWallet
         )
     => ctx
         -- ^ Surrounding Context
-    -> (k 'RootK XPrv, Passphrase "encryption")
+    -> (k 'RootK XPrv, Passphrase "user")
         -- ^ Root key
     -> (  WorkerCtx ctx
        -> WalletId
@@ -1144,9 +1150,9 @@ mkLegacyWallet ctx wid cp meta pending progress = do
     pwdInfo <- case meta ^. #passphraseInfo of
         Nothing ->
             pure Nothing
-        Just (W.WalletPassphraseInfo time EncryptWithPBKDF2) ->
+        Just (WalletPassphraseInfo time EncryptWithPBKDF2) ->
             pure $ Just $ ApiWalletPassphraseInfo time
-        Just (W.WalletPassphraseInfo time EncryptWithScrypt) -> do
+        Just (WalletPassphraseInfo time EncryptWithScrypt) -> do
             withWorkerCtx @_ @s @k ctx wid liftE liftE $
                 matchEmptyPassphrase >=> \case
                     Right{} -> pure Nothing
@@ -1195,10 +1201,11 @@ postRandomWallet ctx body = do
     postLegacyWallet ctx (rootXPrv, pwd) $ \wrk wid ->
         W.createWallet @(WorkerCtx ctx) @_ @s @k wrk wid wName s
   where
-    wName = getApiT (body ^. #name)
-    pwd   = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = Byron.generateKeyFromSeed seed pwd
-      where seed = getApiMnemonicT (body ^. #mnemonicSentence)
+    wName    = body ^. #name . #getApiT
+    seed     = body ^. #mnemonicSentence . #getApiMnemonicT
+    pwd      = body ^. #passphrase . #getApiT
+    pwdP     = preparePassphrase currentPassphraseScheme pwd
+    rootXPrv = Byron.generateKeyFromSeed seed pwdP
 
 postRandomWalletFromXPrv
     :: forall ctx s k n.
@@ -1239,12 +1246,14 @@ postIcarusWallet
     -> Handler ApiByronWallet
 postIcarusWallet ctx body = do
     postLegacyWallet ctx (rootXPrv, pwd) $ \wrk wid ->
-        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName (rootXPrv, pwd)
+        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName
+            (rootXPrv, pwdP)
   where
-    wName = getApiT (body ^. #name)
-    pwd   = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = Icarus.generateKeyFromSeed seed pwd
-      where seed = getApiMnemonicT (body ^. #mnemonicSentence)
+    wName    = body ^. #name . #getApiT
+    seed     = body ^. #mnemonicSentence . #getApiMnemonicT
+    pwd      = body ^. #passphrase . #getApiT
+    pwdP     = preparePassphrase currentPassphraseScheme pwd
+    rootXPrv = Icarus.generateKeyFromSeed seed pwdP
 
 postTrezorWallet
     :: forall ctx s k n.
@@ -1260,12 +1269,14 @@ postTrezorWallet
     -> Handler ApiByronWallet
 postTrezorWallet ctx body = do
     postLegacyWallet ctx (rootXPrv, pwd) $ \wrk wid ->
-        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName (rootXPrv, pwd)
+        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName
+            (rootXPrv, pwdP)
   where
-    wName = getApiT (body ^. #name)
-    pwd   = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = Icarus.generateKeyFromSeed seed pwd
-      where seed = getApiMnemonicT (body ^. #mnemonicSentence)
+    wName    = body ^. #name . #getApiT
+    seed     = body ^. #mnemonicSentence . #getApiMnemonicT
+    pwd      = body ^. #passphrase . #getApiT
+    pwdP     = preparePassphrase currentPassphraseScheme pwd
+    rootXPrv = Icarus.generateKeyFromSeed seed pwdP
 
 postLedgerWallet
     :: forall ctx s k n.
@@ -1281,12 +1292,14 @@ postLedgerWallet
     -> Handler ApiByronWallet
 postLedgerWallet ctx body = do
     postLegacyWallet ctx (rootXPrv, pwd) $ \wrk wid ->
-        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName (rootXPrv, pwd)
+        W.createIcarusWallet @(WorkerCtx ctx) @s @k wrk wid wName
+            (rootXPrv, pwdP)
   where
-    wName = getApiT (body ^. #name)
-    pwd   = preparePassphrase EncryptWithPBKDF2 $ getApiT (body ^. #passphrase)
-    rootXPrv = Icarus.generateKeyFromHardwareLedger mw pwd
-      where mw = getApiMnemonicT (body ^. #mnemonicSentence)
+    wName    = body ^. #name . #getApiT
+    mw       = body ^. #mnemonicSentence . #getApiMnemonicT
+    pwd      = body ^. #passphrase . #getApiT
+    pwdP     = preparePassphrase currentPassphraseScheme pwd
+    rootXPrv = Icarus.generateKeyFromHardwareLedger mw pwdP
 
 {-------------------------------------------------------------------------------
                              ApiLayer Discrimination
@@ -2669,7 +2682,7 @@ rndStateChange
         )
     => ctx
     -> ApiT WalletId
-    -> Passphrase "raw"
+    -> Passphrase "user"
     -> Handler (ArgGenChange s)
 rndStateChange ctx (ApiT wid) pwd =
     withWorkerCtx @_ @s @k ctx wid liftE liftE $ \wrk -> liftHandler $
@@ -3249,6 +3262,12 @@ instance IsServerError ErrWithRootKey where
             apiError err403 WrongEncryptionPassphrase $ mconcat
                 [ "The given encryption passphrase doesn't match the one I use "
                 , "to encrypt the root private key of the given wallet: "
+                , toText wid
+                ]
+        ErrWithRootKeyWrongPassphrase wid (ErrPassphraseSchemeUnsupported s) ->
+            apiError err501 WrongEncryptionPassphrase $ mconcat
+                [ "This build is not compiled with support for the "
+                , toText s <> " scheme used by the given wallet: "
                 , toText wid
                 ]
 

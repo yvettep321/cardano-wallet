@@ -68,7 +68,7 @@ import Cardano.Ledger.Crypto
 import Cardano.Ledger.Era
     ( Crypto, Era )
 import Cardano.Wallet.Primitive.AddressDerivation
-    ( Depth (..), Passphrase (..), RewardAccount (..), WalletKey (..) )
+    ( Depth (..), RewardAccount (..), WalletKey (..) )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
     ( ByronKey )
 import Cardano.Wallet.Primitive.AddressDerivation.Icarus
@@ -83,6 +83,8 @@ import Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
     , prepareOutputsWith
     , selectionDelta
     )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase (..) )
 import Cardano.Wallet.Primitive.Types
     ( FeePolicy (..), ProtocolParameters (..), TxParameters (..) )
 import Cardano.Wallet.Primitive.Types.Address

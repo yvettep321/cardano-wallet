@@ -56,7 +56,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , KeyFingerprint (..)
     , MkKeyFingerprint (..)
     , NetworkDiscriminant (..)
-    , Passphrase (..)
     , PaymentAddress (..)
     , PersistPrivateKey (..)
     , PersistPublicKey (..)
@@ -70,12 +69,12 @@ import Cardano.Wallet.Primitive.AddressDiscovery
     ( GetPurpose (..), IsOurs (..) )
 import Cardano.Wallet.Primitive.AddressDiscovery.Sequential
     ( SeqState, coinTypeAda, purposeBIP44 )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase (..), PassphraseHash (..), changePassphraseXPrv )
 import Cardano.Wallet.Primitive.Types
     ( invariant, testnetMagic )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
-import Cardano.Wallet.Primitive.Types.Hash
-    ( Hash (..) )
 import Control.Arrow
     ( first, left )
 import Control.DeepSeq
@@ -342,8 +341,8 @@ instance SoftDerivation IcarusKey where
 instance WalletKey IcarusKey where
     keyTypeDescriptor _ = "ica"
 
-    changePassphrase (Passphrase old) (Passphrase new) (IcarusKey prv) =
-        IcarusKey $ xPrvChangePass old new prv
+    changePassphrase old new (IcarusKey prv) =
+        IcarusKey $ changePassphraseXPrv old new prv
 
     publicKey (IcarusKey prv) =
         IcarusKey (toXPub prv)
@@ -407,12 +406,12 @@ instance IsOurs (SeqState n IcarusKey) RewardAccount where
 instance PersistPrivateKey (IcarusKey 'RootK) where
     serializeXPrv (k, h) =
         ( hex . unXPrv . getKey $ k
-        , hex . getHash $ h
+        , hex . getPassphraseHash $ h
         )
 
     unsafeDeserializeXPrv (k, h) = either err id $ (,)
         <$> fmap IcarusKey (xprvFromText k)
-        <*> fmap Hash (fromHex h)
+        <*> fmap PassphraseHash (fromHex h)
       where
         xprvFromText = xprv <=< fromHex @ByteString
         err _ = error "unsafeDeserializeXPrv: unable to deserialize IcarusKey"

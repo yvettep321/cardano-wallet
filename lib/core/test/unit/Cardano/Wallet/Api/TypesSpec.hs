@@ -194,13 +194,8 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , HardDerivation (..)
     , Index (..)
     , NetworkDiscriminant (..)
-    , Passphrase (..)
-    , PassphraseMaxLength (..)
-    , PassphraseMinLength (..)
     , Role (..)
     , WalletKey (..)
-    , passphraseMaxLength
-    , passphraseMinLength
     )
 import Cardano.Wallet.Primitive.AddressDerivation.Shelley
     ( ShelleyKey (..), generateKeyFromSeed )
@@ -208,6 +203,14 @@ import Cardano.Wallet.Primitive.AddressDerivationSpec
     ()
 import Cardano.Wallet.Primitive.AddressDiscovery.Sequential
     ( AddressPoolGap, getAddressPoolGap )
+import Cardano.Wallet.Primitive.Passphrase.Types
+    ( Passphrase (..)
+    , PassphraseHash (PassphraseHash)
+    , PassphraseMaxLength (..)
+    , PassphraseMinLength (..)
+    , passphraseMaxLength
+    , passphraseMinLength
+    )
 import Cardano.Wallet.Primitive.SyncProgress
     ( SyncProgress (..) )
 import Cardano.Wallet.Primitive.Types
@@ -481,7 +484,7 @@ spec = parallel $ do
             jsonRoundtripAndGolden $ Proxy @ApiWalletMigrationBalance
             jsonRoundtripAndGolden $ Proxy @(ApiWalletMigrationPlanPostData ('Testnet 0))
             jsonRoundtripAndGolden $ Proxy @(ApiWalletMigrationPostData ('Testnet 0) "lenient")
-            jsonRoundtripAndGolden $ Proxy @(ApiWalletMigrationPostData ('Testnet 0) "raw")
+            jsonRoundtripAndGolden $ Proxy @(ApiWalletMigrationPostData ('Testnet 0) "user")
             jsonRoundtripAndGolden $ Proxy @ApiWalletPassphrase
             jsonRoundtripAndGolden $ Proxy @ApiWalletUtxoSnapshot
             jsonRoundtripAndGolden $ Proxy @ApiUtxoStatistics
@@ -508,7 +511,7 @@ spec = parallel $ do
             jsonRoundtripAndGolden $ Proxy @WalletPutPassphraseData
             jsonRoundtripAndGolden $ Proxy @ByronWalletPutPassphraseData
             jsonRoundtripAndGolden $ Proxy @(ApiT (Hash "Tx"))
-            jsonRoundtripAndGolden $ Proxy @(ApiT (Passphrase "raw"))
+            jsonRoundtripAndGolden $ Proxy @(ApiT (Passphrase "user"))
             jsonRoundtripAndGolden $ Proxy @(ApiT (Passphrase "lenient"))
             jsonRoundtripAndGolden $ Proxy @(ApiT Address, Proxy ('Testnet 0))
             jsonRoundtripAndGolden $ Proxy @(ApiT AddressPoolGap)
@@ -578,20 +581,20 @@ spec = parallel $ do
         validateEveryPath (Proxy :: Proxy (Api ('Testnet 0) ApiStakePool))
 
     parallel $ describe "verify JSON parsing failures too" $ do
-        it "ApiT (Passphrase \"raw\") (too short)" $ do
-            let minLength = passphraseMinLength (Proxy :: Proxy "raw")
+        it "ApiT (Passphrase \"user\") (too short)" $ do
+            let minLength = passphraseMinLength (Proxy :: Proxy "user")
             let msg = "Error in $: passphrase is too short: \
                     \expected at least " <> show minLength <> " characters"
             Aeson.parseEither parseJSON [aesonQQ|"patate"|]
-                `shouldBe` (Left @String @(ApiT (Passphrase "raw")) msg)
+                `shouldBe` (Left @String @(ApiT (Passphrase "user")) msg)
 
-        it "ApiT (Passphrase \"raw\") (too long)" $ do
-            let maxLength = passphraseMaxLength (Proxy :: Proxy "raw")
+        it "ApiT (Passphrase \"user\") (too long)" $ do
+            let maxLength = passphraseMaxLength (Proxy :: Proxy "user")
             let msg = "Error in $: passphrase is too long: \
                     \expected at most " <> show maxLength <> " characters"
             Aeson.parseEither parseJSON [aesonQQ|
                 #{replicate (2*maxLength) '*'}
-            |] `shouldBe` (Left @String @(ApiT (Passphrase "raw")) msg)
+            |] `shouldBe` (Left @String @(ApiT (Passphrase "user")) msg)
 
         it "ApiT (Passphrase \"lenient\") (too long)" $ do
             let maxLength = passphraseMaxLength (Proxy :: Proxy "lenient")
@@ -930,9 +933,9 @@ spec = parallel $ do
             let
                 x' = ApiWalletMigrationPostData
                     { passphrase = passphrase
-                        (x :: ApiWalletMigrationPostData ('Testnet 0) "raw")
+                        (x :: ApiWalletMigrationPostData ('Testnet 0) "user")
                     , addresses = addresses
-                        (x :: ApiWalletMigrationPostData ('Testnet 0) "raw")
+                        (x :: ApiWalletMigrationPostData ('Testnet 0) "user")
                     }
             in
                 x' === x .&&. show x' === show x
@@ -1511,7 +1514,7 @@ instance Arbitrary ByronWalletFromXPrvPostData where
         n <- arbitrary
         rootXPrv <- ApiT . unsafeXPrv . BS.pack <$> vector 128
         bytesNumber <- choose (64,100)
-        h <- ApiT . Hash . B8.pack <$> replicateM bytesNumber arbitrary
+        h <- ApiT . PassphraseHash . BA.convert . B8.pack <$> replicateM bytesNumber arbitrary
         pure $ ByronWalletFromXPrvPostData n rootXPrv h
 
 instance Arbitrary SomeByronWalletPostData where
@@ -2383,7 +2386,7 @@ instance Typeable n => ToSchema (ApiWalletMigrationPostData n "lenient") where
     declareNamedSchema _ =
         declareSchemaForDefinition "ApiByronWalletMigrationPostData"
 
-instance Typeable n => ToSchema (ApiWalletMigrationPostData n "raw") where
+instance Typeable n => ToSchema (ApiWalletMigrationPostData n "user") where
     declareNamedSchema _ =
         declareSchemaForDefinition "ApiShelleyWalletMigrationPostData"
 
