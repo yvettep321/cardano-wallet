@@ -10,7 +10,7 @@
   {
     flags = { release = false; };
     package = {
-      specVersion = "1.10";
+      specVersion = "3.0";
       identifier = {
         name = "cardano-wallet-core-integration";
         version = "2021.7.30";
@@ -29,10 +29,11 @@
     components = {
       "library" = {
         depends = [
+          (hsPkgs."base" or (errorHandler.buildDepError "base"))
+          (hsPkgs."cardano-wallet-base" or (errorHandler.buildDepError "cardano-wallet-base"))
           (hsPkgs."HUnit" or (errorHandler.buildDepError "HUnit"))
           (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
           (hsPkgs."aeson-qq" or (errorHandler.buildDepError "aeson-qq"))
-          (hsPkgs."base" or (errorHandler.buildDepError "base"))
           (hsPkgs."base58-bytestring" or (errorHandler.buildDepError "base58-bytestring"))
           (hsPkgs."bech32" or (errorHandler.buildDepError "bech32"))
           (hsPkgs."bytestring" or (errorHandler.buildDepError "bytestring"))
@@ -71,7 +72,7 @@
           (hsPkgs."scrypt" or (errorHandler.buildDepError "scrypt"))
           (hsPkgs."template-haskell" or (errorHandler.buildDepError "template-haskell"))
           (hsPkgs."text" or (errorHandler.buildDepError "text"))
-          (hsPkgs."text-class" or (errorHandler.buildDepError "text-class"))
+          (hsPkgs."cardano-wallet-text-class" or (errorHandler.buildDepError "cardano-wallet-text-class"))
           (hsPkgs."time" or (errorHandler.buildDepError "time"))
           (hsPkgs."unliftio" or (errorHandler.buildDepError "unliftio"))
           (hsPkgs."unliftio-core" or (errorHandler.buildDepError "unliftio-core"))

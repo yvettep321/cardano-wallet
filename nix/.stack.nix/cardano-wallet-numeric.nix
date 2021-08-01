@@ -10,7 +10,7 @@
   {
     flags = { release = false; };
     package = {
-      specVersion = "1.10";
+      specVersion = "3.0";
       identifier = { name = "cardano-wallet-numeric"; version = "2020.12.8"; };
       license = "Apache-2.0";
       copyright = "2018-2020 IOHK";
