@@ -2,7 +2,7 @@ module Main where
 
 import Cardano.Wallet.Prelude
 
-import Cardano.Startup
+import Cardano.Wallet.Startup
     ( withUtf8Encoding )
 import Test.Hspec.Core.Runner
     ( defaultConfig, hspecWith )

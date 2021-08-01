@@ -25,8 +25,6 @@ import Cardano.CLI
     , getPrometheusURL
     , withLoggingNamed
     )
-import Cardano.Startup
-    ( installSignalHandlers, setDefaultFilePermissions, withUtf8Encoding )
 import Cardano.Wallet.Api.Types
     ( EncodeAddress (..) )
 import Cardano.Wallet.Logging
@@ -59,6 +57,8 @@ import Cardano.Wallet.Shelley.Launch.Cluster
     , walletMinSeverityFromEnv
     , withCluster
     )
+import Cardano.Wallet.Startup
+    ( installSignalHandlers, setDefaultFilePermissions, withUtf8Encoding )
 import Control.Monad
     ( void, when )
 import Control.Tracer

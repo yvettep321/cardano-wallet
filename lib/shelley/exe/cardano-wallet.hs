@@ -65,12 +65,6 @@ import Cardano.CLI
     )
 import Cardano.Launcher.Node
     ( CardanoNodeConn )
-import Cardano.Startup
-    ( ShutdownHandlerLog
-    , installSignalHandlers
-    , withShutdownHandler
-    , withUtf8Encoding
-    )
 import Cardano.Wallet.Api.Client
     ( addressClient
     , networkClient
@@ -102,6 +96,12 @@ import Cardano.Wallet.Shelley.Launch
     , networkConfigurationOption
     , nodeSocketOption
     , parseGenesisData
+    )
+import Cardano.Wallet.Startup
+    ( ShutdownHandlerLog (..)
+    , installSignalHandlers
+    , withShutdownHandler
+    , withUtf8Encoding
     )
 import Cardano.Wallet.Version
     ( GitRevision, Version, showFullVersion )
@@ -295,7 +295,7 @@ instance ToText MainLog where
         MsgSigInt ->
             "Interrupted by user."
         MsgShutdownHandler msg' ->
-            toText msg'
+            fmt $ build msg'
         MsgFailedToParseGenesis hint -> T.unwords
             [ "Failed to parse Byron genesis configuration. You may want to check"
             , "the filepath given via --genesis and make sure it points to a "
@@ -344,3 +344,10 @@ tracerSeveritiesOption = Tracers
         <> value def
         <> metavar "SEVERITY"
         <> internal
+
+instance HasPrivacyAnnotation ShutdownHandlerLog
+instance HasSeverityAnnotation ShutdownHandlerLog where
+    getSeverityAnnotation = \case
+        MsgShutdownHandlerEnabled _ -> Debug
+        MsgShutdownEOF -> Notice
+        MsgShutdownError _ -> Error

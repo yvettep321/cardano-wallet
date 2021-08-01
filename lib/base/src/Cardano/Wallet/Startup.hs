@@ -96,7 +96,7 @@ withShutdownHandler tr = withShutdownHandler' tr stdin
 withShutdownHandler' :: Tracer IO ShutdownHandlerLog -> Handle -> IO a -> IO (Maybe a)
 withShutdownHandler' tr h action = do
     enabled <- hIsOpen h
-    traceWith tr $ MsgShutdownHandler enabled
+    traceWith tr $ MsgShutdownHandlerEnabled enabled
     let with
             | enabled = fmap eitherToMaybe . race readerLoop
             | otherwise = fmap Just
@@ -116,14 +116,14 @@ withShutdownHandler' tr h action = do
         takeMVar v >>= either throwIO pure
 
 data ShutdownHandlerLog
-    = MsgShutdownHandler Bool
+    = MsgShutdownHandlerEnabled Bool
     | MsgShutdownEOF
     | MsgShutdownError IOException
     deriving (Show, Eq)
 
 instance Buildable ShutdownHandlerLog where
     build = \case
-        MsgShutdownHandler enabled ->
+        MsgShutdownHandlerEnabled enabled ->
             "Cross-platform subprocess shutdown handler is "
             <> if enabled then "enabled." else "disabled."
         MsgShutdownEOF ->

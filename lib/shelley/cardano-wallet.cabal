@@ -219,13 +219,13 @@ test-suite unit
 library faucet
   import: base, project-config
   build-depends:
-      cardano-wallet-core-integration
+      cardano-wallet-core
+    , cardano-wallet-core-integration
     , aeson
     , bytestring
     , cardano-addresses
     , cardano-api
     , unliftio
-
   hs-source-dirs:
       test/faucet
   exposed-modules:

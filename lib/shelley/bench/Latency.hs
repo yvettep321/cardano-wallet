@@ -25,8 +25,6 @@ import Cardano.BM.Trace
     ( traceInTVarIO )
 import Cardano.CLI
     ( Port (..) )
-import Cardano.Startup
-    ( withUtf8Encoding )
 import Cardano.Wallet.Api.Types
     ( ApiAddress
     , ApiAsset (..)
@@ -74,6 +72,8 @@ import Cardano.Wallet.Shelley.Launch.Cluster
     , walletListenFromEnv
     , withCluster
     )
+import Cardano.Wallet.Startup
+    ( withUtf8Encoding )
 import Cardano.Wallet.Unsafe
     ( unsafeFromText )
 import Control.Monad

@@ -34,11 +34,6 @@ import Cardano.CLI
     )
 import Cardano.Launcher
     ( ProcessHasExited (..) )
-import Cardano.Startup
-    ( installSignalHandlersNoLogging
-    , setDefaultFilePermissions
-    , withUtf8Encoding
-    )
 import Cardano.Wallet.Api.Types
     ( EncodeAddress (..) )
 import Cardano.Wallet.Logging
@@ -79,6 +74,11 @@ import Cardano.Wallet.Shelley.Launch.Cluster
     , walletMinSeverityFromEnv
     , withCluster
     , withSMASH
+    )
+import Cardano.Wallet.Startup
+    ( installSignalHandlersNoLogging
+    , setDefaultFilePermissions
+    , withUtf8Encoding
     )
 import Cardano.Wallet.TokenMetadata.MockServer
     ( queryServerStatic, withMetadataServer )

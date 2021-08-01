@@ -96,8 +96,6 @@ import Cardano.Launcher.Node
     )
 import Cardano.Pool.Metadata
     ( SMASHPoolId (..) )
-import Cardano.Startup
-    ( restrictFileMode )
 import Cardano.Wallet.Api.Server
     ( Listen (..) )
 import Cardano.Wallet.Api.Types
@@ -134,6 +132,8 @@ import Cardano.Wallet.Shelley.Compatibility
     ( NodeVersionData, StandardShelley, nodeToClientVersion )
 import Cardano.Wallet.Shelley.Launch
     ( TempDirLog (..), envFromText, isEnvSet, lookupEnvNonEmpty )
+import Cardano.Wallet.Startup
+    ( restrictFileMode )
 import Cardano.Wallet.Unsafe
     ( unsafeFromHex, unsafeRunExceptT )
 import Control.Monad
@@ -1489,7 +1489,7 @@ submitTx tr conn name signedTx =
 -- it has waited for too long.
 waitForSocket :: Tracer IO ClusterLog -> CardanoNodeConn -> IO ()
 waitForSocket tr conn = do
-    let msg = "Checking for usable socket file " <> toText conn
+    let msg = "Checking for usable socket file "+|conn|+""
     -- TODO: check whether querying the tip works just as well.
     cliRetry tr msg =<< cliConfigNode tr conn
         ["query", "tip"
@@ -1807,8 +1807,8 @@ instance ToText ClusterLog where
                 , " stake pools are being registered on chain... "
                 , "Can be skipped using NO_POOLS=1."
                 ]
-        MsgLauncher name msg ->
-            T.pack name <> " " <> toText msg
+        MsgLauncher name msg -> fmt $
+            build name <> " " <> build msg
         MsgStartedStaticServer baseUrl fp ->
             "Started a static server for " <> T.pack fp
                 <> " at " <> T.pack baseUrl
@@ -1822,8 +1822,8 @@ instance ToText ClusterLog where
         MsgCLIRetryResult msg code err ->
             "Failed " <> msg <> " with exit code " <>
                 T.pack (show code) <> ":\n" <> indent err
-        MsgSocketIsReady conn ->
-            toText conn <> " is ready."
+        MsgSocketIsReady conn -> fmt $
+            build conn <> " is ready."
         MsgStakeDistribution name st out err -> case st of
             ExitSuccess ->
                 "Stake distribution query for " <> T.pack name <>

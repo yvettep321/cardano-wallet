@@ -98,7 +98,7 @@ spec = do
                     , AssetMetadata "Token15" "description15" Nothing Nothing Nothing Nothing
                     ]
 
-    traceSpec $ describe "Using mock server" $ do
+    traceSpec toText $ describe "Using mock server" $ do
         it "testing empty req" $ \tr ->
             withMetadataServer (queryServerStatic golden1File) $ \srv -> do
                 client <- newMetadataClient tr (Just srv)

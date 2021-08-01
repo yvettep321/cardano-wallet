@@ -93,7 +93,7 @@ spec = describe "withShutdownHandler" $ do
         logs <- captureLogging' $ \tr -> do
             withShutdownHandler' tr a (pure ())
                 `shouldReturn` Just ()
-        logs `shouldContain` [MsgShutdownHandler True]
+        logs `shouldContain` [MsgShutdownHandlerEnabled True]
 
     it "action completes with delay" $ withPipe $ \(a, _) -> do
         res <- withShutdownHandler' nullTracer a $ do
@@ -123,7 +123,7 @@ spec = describe "withShutdownHandler" $ do
         logs <- captureLogging' $ \tr -> do
             withShutdownHandler' tr a (throwIO bomb)
                 `shouldThrow` isUserError
-        logs `shouldBe` [MsgShutdownHandler True]
+        logs `shouldBe` [MsgShutdownHandlerEnabled True]
 
     it ("handle is " ++ nullFileName ++ " (immediate EOF)") $ do
         pendingOnWindows $ "Can't open " ++ nullFileName ++ " for reading"
@@ -145,7 +145,7 @@ spec = describe "withShutdownHandler" $ do
                 threadDelay decisecond -- give handler a chance to run
                 pure ()
             res `shouldBe` Just ()
-        logs `shouldContain` [MsgShutdownHandler False]
+        logs `shouldContain` [MsgShutdownHandlerEnabled False]
 
 withPipe :: ((Handle, Handle) -> IO a) -> IO a
 withPipe = bracket createPipe closePipe

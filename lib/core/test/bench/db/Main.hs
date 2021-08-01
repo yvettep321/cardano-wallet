@@ -60,8 +60,6 @@ import Cardano.DB.Sqlite
     )
 import Cardano.Mnemonic
     ( EntropySize, SomeMnemonic (..), entropyToMnemonic, genEntropy )
-import Cardano.Startup
-    ( withUtf8Encoding )
 import Cardano.Wallet.DB
     ( DBLayer (..), cleanDB )
 import Cardano.Wallet.DB.Sqlite
@@ -143,6 +141,8 @@ import Cardano.Wallet.Primitive.Types.Tx
     )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..) )
+import Cardano.Wallet.Startup
+    ( withUtf8Encoding )
 import Cardano.Wallet.Unsafe
     ( someDummyMnemonic, unsafeRunExceptT )
 import Control.DeepSeq

@@ -460,7 +460,7 @@ data ApplicationLog
 instance ToText ApplicationLog where
     toText = \case
         MsgStarting conn ->
-            "Wallet backend server starting. Using " <> toText conn <> "."
+            "Wallet backend server starting. Using "+|conn|+"."
         MsgNetworkName network ->
             "Node is Haskell Node on " <> network <> "."
         MsgServerStartupError startupErr -> case startupErr of
