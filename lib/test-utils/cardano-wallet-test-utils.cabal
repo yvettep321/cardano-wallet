@@ -60,7 +60,6 @@ library
     , say
     , template-haskell
     , text
-    , cardano-wallet-text-class
     , time
     , unliftio
     , unliftio-core

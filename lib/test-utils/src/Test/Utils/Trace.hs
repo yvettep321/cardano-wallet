@@ -19,15 +19,18 @@ module Test.Utils.Trace
 
 import Cardano.Wallet.Prelude
 
-
 import Cardano.BM.Trace
     ( traceInTVarIO )
 import Control.Monad.IO.Unlift
     ( MonadIO (..), MonadUnliftIO (..) )
 import Control.Tracer
     ( Tracer, natTracer )
-import Data.Text.Class
-    ( ToText (..) )
+import Data.Text.Lazy
+    ( toStrict )
+import Data.Text.Lazy.Builder
+    ( toLazyText )
+import Formatting.Buildable
+    ( Buildable (..) )
 import Say
     ( say )
 import Test.Hspec
@@ -63,9 +66,9 @@ captureLogging' action = withLogging' @m @mtr $ \(tr, getMsgs) -> do
 
 -- | Provides a Tracer to the spec, which is silent, unless something goes
 -- wrong. In that case, it dumps all the traces it has collected to stdout.
-traceSpec :: (HasCallStack, ToText msg) => SpecWith (Tracer IO msg) -> Spec
+traceSpec :: (HasCallStack, Buildable msg) => SpecWith (Tracer IO msg) -> Spec
 traceSpec = around $ \spec -> withLogging $ \(tr, getMsgs) -> do
-    let dumpLogs = getMsgs >>= mapM_ (say . toText)
+    let dumpLogs = getMsgs >>= mapM_ (say . toStrict . toLazyText . build)
         rule s = say ("--- Failed spec logs " <> s <> " ---")
         explain a = rule "BEGIN" *> a <* rule "END"
     spec tr `onException` explain dumpLogs
