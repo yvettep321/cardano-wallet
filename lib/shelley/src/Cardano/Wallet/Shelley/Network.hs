@@ -64,6 +64,19 @@ import Cardano.Wallet.Logging
     )
 import Cardano.Wallet.Network
     ( Cursor, ErrPostTx (..), NetworkLayer (..), mapCursor )
+import Cardano.Wallet.Network.Client
+    ( ChainSyncCmd (..)
+    , ChainSyncLog (..)
+    , LSQ (..)
+    , LocalStateQueryCmd (..)
+    , LocalTxSubmissionCmd (..)
+    , chainSyncFollowTip
+    , chainSyncWithBlocks
+    , localStateQuery
+    , localTxSubmission
+    , mapChainSyncLog
+    , send
+    )
 import Cardano.Wallet.Primitive.Slotting
     ( TimeInterpreter
     , TimeInterpreterLog
@@ -186,19 +199,6 @@ import Ouroboros.Network.Block
     , getPoint
     , pointHash
     , pointSlot
-    )
-import Ouroboros.Network.Client.Wallet
-    ( ChainSyncCmd (..)
-    , ChainSyncLog (..)
-    , LSQ (..)
-    , LocalStateQueryCmd (..)
-    , LocalTxSubmissionCmd (..)
-    , chainSyncFollowTip
-    , chainSyncWithBlocks
-    , localStateQuery
-    , localTxSubmission
-    , mapChainSyncLog
-    , send
     )
 import Ouroboros.Network.CodecCBORTerm
     ( CodecCBORTerm )

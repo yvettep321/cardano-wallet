@@ -10,14 +10,15 @@
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
--- Copyright: © 2020 IOHK
+-- Copyright: © 2020-2021 IOHK
 -- License: Apache-2.0
 --
 -- Ouroboros mini-protocols clients for implementing cardano-wallet. These
 -- clients implement the logic and lift away concerns related to concrete
 -- data-type representation so that the code can be re-used / shared between
 -- Byron and Shelley.
-module Ouroboros.Network.Client.Wallet
+
+module Cardano.Wallet.Network.Client
     (
       -- * ChainSyncFollowTip
       chainSyncFollowTip
