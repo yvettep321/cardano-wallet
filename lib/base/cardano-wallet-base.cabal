@@ -76,12 +76,12 @@ test-suite unit
   import: base, project-config, exe
   build-depends:
       cardano-wallet-base
+    , cardano-wallet-test-utils
     , bytestring
-    , contra-tracer
     , hspec
     , hspec-core
+    , hspec-expectations
     , text
-    , unliftio-core
     , unliftio
     , QuickCheck
   build-tool-depends:
