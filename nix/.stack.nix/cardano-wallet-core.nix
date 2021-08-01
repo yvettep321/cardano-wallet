@@ -8,7 +8,7 @@
   , config
   , ... }:
   {
-    flags = { release = false; };
+    flags = { release = false; scrypt = true; };
     package = {
       specVersion = "1.10";
       identifier = { name = "cardano-wallet-core"; version = "2021.7.30"; };
@@ -89,7 +89,6 @@
           (hsPkgs."retry" or (errorHandler.buildDepError "retry"))
           (hsPkgs."safe" or (errorHandler.buildDepError "safe"))
           (hsPkgs."scientific" or (errorHandler.buildDepError "scientific"))
-          (hsPkgs."scrypt" or (errorHandler.buildDepError "scrypt"))
           (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
           (hsPkgs."servant-client" or (errorHandler.buildDepError "servant-client"))
           (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
@@ -120,7 +119,7 @@
           (hsPkgs."Win32-network" or (errorHandler.buildDepError "Win32-network"))
           (hsPkgs."QuickCheck" or (errorHandler.buildDepError "QuickCheck"))
           (hsPkgs."cardano-wallet-test-utils" or (errorHandler.buildDepError "cardano-wallet-test-utils"))
-          ];
+          ] ++ (pkgs.lib).optional (flags.scrypt) (hsPkgs."scrypt" or (errorHandler.buildDepError "scrypt"));
         buildable = true;
         };
       tests = {

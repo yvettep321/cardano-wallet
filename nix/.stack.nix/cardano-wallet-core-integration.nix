@@ -68,7 +68,6 @@
           (hsPkgs."resourcet" or (errorHandler.buildDepError "resourcet"))
           (hsPkgs."retry" or (errorHandler.buildDepError "retry"))
           (hsPkgs."say" or (errorHandler.buildDepError "say"))
-          (hsPkgs."scrypt" or (errorHandler.buildDepError "scrypt"))
           (hsPkgs."template-haskell" or (errorHandler.buildDepError "template-haskell"))
           (hsPkgs."text" or (errorHandler.buildDepError "text"))
           (hsPkgs."text-class" or (errorHandler.buildDepError "text-class"))
