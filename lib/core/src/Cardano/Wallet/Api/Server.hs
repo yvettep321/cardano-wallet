@@ -3139,10 +3139,6 @@ data ErrCreateWallet
 data ErrTemporarilyDisabled = ErrTemporarilyDisabled
     deriving (Eq, Show)
 
--- | Small helper to easy show things to Text
-showT :: Show a => a -> Text
-showT = T.pack . show
-
 instance IsServerError ErrCurrentEpoch where
     toServerError = \case
         ErrUnableToDetermineCurrentEpoch ->
