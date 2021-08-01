@@ -271,8 +271,6 @@ import Cardano.Wallet.Primitive.AddressDerivation
     , WalletKey (..)
     , fromHex
     , hex
-import Cardano.Wallet.Primitive.Passphrase ( Passphrase (..)
-    , preparePassphrase
     )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
     ( ByronKey (..) )
@@ -284,6 +282,10 @@ import Cardano.Wallet.Primitive.AddressDiscovery.Sequential
     ( coinTypeAda )
 import Cardano.Wallet.Primitive.AddressDiscovery.Shared
     ( CredentialType (..) )
+import Cardano.Wallet.Primitive.Passphrase
+    ( Passphrase (..), preparePassphrase )
+import Cardano.Wallet.Primitive.Passphrase.Legacy
+    ( encryptPassphraseTestingOnly )
 import Cardano.Wallet.Primitive.SyncProgress
     ( SyncProgress (..) )
 import Cardano.Wallet.Primitive.Types
@@ -327,14 +329,10 @@ import Control.Retry
     ( capDelay, constantDelay, retrying )
 import Crypto.Hash
     ( Blake2b_160, Digest, digestFromByteString )
-import Crypto.Random.Entropy
-    ( getEntropy )
 import Data.Aeson
     ( FromJSON, ToJSON, Value, (.=) )
 import Data.Aeson.QQ
     ( aesonQQ )
-import Data.ByteArray.Encoding
-    ( Base (..), convertFromBase, convertToBase )
 import Data.ByteString
     ( ByteString )
 import Data.Either.Extra
@@ -437,14 +435,11 @@ import qualified Cardano.Wallet.Primitive.AddressDerivation.Byron as Byron
 import qualified Cardano.Wallet.Primitive.AddressDerivation.Icarus as Icarus
 import qualified Cardano.Wallet.Primitive.AddressDerivation.Shared as Shared
 import qualified Cardano.Wallet.Primitive.AddressDerivation.Shelley as Shelley
-import qualified Cardano.Wallet.Primitive.Types as W
+import qualified Cardano.Wallet.Primitive.Passphrase.Types as W
 import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TokenBundle
 import qualified Cardano.Wallet.Primitive.Types.TokenMap as TokenMap
 import qualified Cardano.Wallet.Primitive.Types.TokenQuantity as TokenQuantity
 import qualified Codec.Binary.Bech32 as Bech32
-import qualified Codec.CBOR.Encoding as CBOR
-import qualified Codec.CBOR.Write as CBOR
-import qualified Crypto.KDF.Scrypt as Scrypt
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString as BS
@@ -1255,7 +1250,7 @@ emptyRandomWalletWithPasswd ctx rawPwd = do
             $ hex
             $ Byron.getKey
             $ Byron.generateKeyFromSeed seed pwd
-    pwdH <- encryptPassphraseTestingOnly pwd
+    pwdH <- liftIO $ toText <$> encryptPassphraseTestingOnly pwd
     emptyByronWalletFromXPrvWith ctx "random" ("Random Wallet", key, pwdH)
 
 postWallet'

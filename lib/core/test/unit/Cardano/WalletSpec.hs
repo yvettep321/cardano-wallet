@@ -537,7 +537,7 @@ walletUpdateNameNoSuchWallet wallet@(wid', _, _) wid wName =
 
 walletUpdatePassphrase
     :: (WalletId, WalletName, DummyState)
-    -> Passphrase "raw"
+    -> Passphrase "user"
     -> Maybe (ShelleyKey 'RootK XPrv, Passphrase "encryption")
     -> Property
 walletUpdatePassphrase wallet new mxprv = monadicIO $ do
@@ -559,7 +559,7 @@ walletUpdatePassphrase wallet new mxprv = monadicIO $ do
 walletUpdatePassphraseWrong
     :: (WalletId, WalletName, DummyState)
     -> (ShelleyKey 'RootK XPrv, Passphrase "encryption")
-    -> (Passphrase "raw", Passphrase "raw")
+    -> (Passphrase "user", Passphrase "user")
     -> Property
 walletUpdatePassphraseWrong wallet (xprv, pwd) (old, new) =
     pwd /= coerce old ==> monadicIO $ do
@@ -575,7 +575,7 @@ walletUpdatePassphraseWrong wallet (xprv, pwd) (old, new) =
 walletUpdatePassphraseNoSuchWallet
     :: (WalletId, WalletName, DummyState)
     -> WalletId
-    -> (Passphrase "raw", Passphrase "raw")
+    -> (Passphrase "user", Passphrase "user")
     -> Property
 walletUpdatePassphraseNoSuchWallet wallet@(wid', _, _) wid (old, new) =
     wid /= wid' ==> monadicIO $ do
@@ -608,7 +608,7 @@ walletUpdatePassphraseDate wallet (xprv, pwd) = monadicIO $ liftIO $ do
 walletKeyIsReencrypted
     :: (WalletId, WalletName)
     -> (ShelleyKey 'RootK XPrv, Passphrase "encryption")
-    -> Passphrase "raw"
+    -> Passphrase "user"
     -> Property
 walletKeyIsReencrypted (wid, wname) (xprv, pwd) newPwd =
     monadicIO $ liftIO $ do
