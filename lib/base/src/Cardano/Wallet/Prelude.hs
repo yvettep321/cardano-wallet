@@ -141,7 +141,7 @@ import Data.Traversable
 import Data.Typeable
     ( Typeable )
 import Data.Word
-    ( Word32, Word64, Word8 )
+    ( Word16, Word32, Word64, Word8 )
 import Debug.Trace
 import GHC.Generics
 import GHC.Natural
@@ -176,6 +176,8 @@ import Control.Tracer
     ( Tracer (..), contramap, traceWith )
 
 -- cardano-wallet packages
+import Cardano.Wallet.Compat
+    ( (^?) )
 import Data.Text.Class
 
 showText :: Show a => a -> Text

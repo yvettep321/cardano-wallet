@@ -278,8 +278,6 @@ import Cardano.Wallet.Api.Types
     , toApiNetworkParameters
     , toApiUtxoStatistics
     )
-import Cardano.Wallet.Compat
-    ( (^?) )
 import Cardano.Wallet.DB
     ( DBFactory (..) )
 import Cardano.Wallet.Network

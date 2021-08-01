@@ -155,8 +155,6 @@ import Data.Set
     ( Set )
 import Data.Type.Equality
     ( type (==) )
-import Data.Word
-    ( Word16 )
 import Ouroboros.Network.Block
     ( SlotNo )
 

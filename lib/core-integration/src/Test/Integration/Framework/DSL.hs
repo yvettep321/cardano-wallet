@@ -259,8 +259,6 @@ import Cardano.Wallet.Api.Types
     , WalletStyle (..)
     , insertedAt
     )
-import Cardano.Wallet.Compat
-    ( (^?) )
 import Cardano.Wallet.Primitive.AddressDerivation
     ( Depth (..)
     , DerivationIndex (..)

@@ -1011,7 +1011,7 @@ toApiNetworkParameters (NetworkParameters gp sp pp) txConstraints toEpochInfo = 
             MinimumUTxOValue c ->
                 c
             MinimumUTxOValueCostPerWord _perWord ->
-                txOutputMinimumAdaQuantity txConstraints TokenMap.empty
+                txOutputMinimumAdaQuantity txConstraints mempty
         , eras = apiEras
         }
   where
