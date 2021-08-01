@@ -40,8 +40,7 @@ common exe
 library
   import: base, project-config
   build-depends:
-      cardano-wallet-text-class
-    , async
+      async
     , contra-tracer
     , deepseq
     , exceptions
@@ -58,8 +57,7 @@ library
   hs-source-dirs:
       src
   exposed-modules:
-      Cardano.Wallet.Prelude
-      Cardano.Wallet.Compat
+      Cardano.Wallet.Base
       UnliftIO.Compat
 
 test-suite unit
