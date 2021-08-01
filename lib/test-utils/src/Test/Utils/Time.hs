@@ -13,7 +13,7 @@ module Test.Utils.Time
     , getUniformTime
     ) where
 
-import Cardano.Wallet.Base
+import Prelude
 
 import Data.Time
     ( Day (ModifiedJulianDay)

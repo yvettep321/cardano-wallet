@@ -5,7 +5,7 @@ module Test.Utils.Pretty
     , pShowBuilder
     ) where
 
-import Cardano.Wallet.Base
+import Prelude
 
 import Data.Text.Lazy.Builder
     ( Builder, fromLazyText )

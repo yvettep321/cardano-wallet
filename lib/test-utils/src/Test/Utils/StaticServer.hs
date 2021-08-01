@@ -9,7 +9,7 @@ module Test.Utils.StaticServer
      ( withStaticServer
      ) where
 
-import Cardano.Wallet.Base
+import Prelude
 
 import Network.Wai.Application.Static
     ( defaultFileServerSettings, staticApp )

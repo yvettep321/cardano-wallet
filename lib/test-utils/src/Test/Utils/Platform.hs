@@ -24,8 +24,10 @@ module Test.Utils.Platform
     , nullFileName
     ) where
 
-import Cardano.Wallet.Base
+import Prelude
 
+import Control.Monad
+    ( when )
 import System.Exit
     ( ExitCode (..) )
 import System.Info
@@ -35,7 +37,7 @@ import Test.Hspec.Core.Spec
 import Test.Hspec.Expectations
     ( Expectation )
 import UnliftIO.Exception
-    ( IOException, handle )
+    ( IOException, handle, throwIO )
 import UnliftIO.Process
     ( readProcessWithExitCode )
 

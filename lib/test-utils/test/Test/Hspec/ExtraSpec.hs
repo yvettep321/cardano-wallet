@@ -3,7 +3,7 @@
 
 module Test.Hspec.ExtraSpec (spec) where
 
-import Cardano.Wallet.Base
+import Prelude
 
 import Control.Monad.IO.Unlift
     ( MonadUnliftIO (..) )

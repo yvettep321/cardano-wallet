@@ -16,9 +16,7 @@ flag release
     default: False
     manual: True
 
-common base
-  build-depends: base >= 4.14 && < 4.15
-               , cardano-wallet-base
+common base { build-depends: base >= 4.14 && < 4.15 }
 
 common project-config
   default-language:     Haskell2010
