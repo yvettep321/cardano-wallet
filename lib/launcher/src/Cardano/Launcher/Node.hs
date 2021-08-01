@@ -70,8 +70,8 @@ isValidWindowsPipeName name = slashPipe `isPrefixOf` name
   where
     slashPipe = "\\\\.\\pipe\\"
 
-instance Builable CardanoNodeConn where
-    toText = build . nodeSocketFile
+instance Buildable CardanoNodeConn where
+    build = build . nodeSocketFile
 
 newtype NodePort = NodePort { unNodePort :: Int }
     deriving (Show, Eq)
