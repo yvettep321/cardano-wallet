@@ -121,8 +121,6 @@ import Cardano.Address.Script
     ( Cosigner (..), ScriptTemplate (..), ValidationLevel (..) )
 import Cardano.Api
     ( AnyCardanoEra (..), CardanoEra (..), SerialiseAsCBOR (..) )
-import Cardano.BM.Tracing
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Mnemonic
     ( SomeMnemonic )
 import Cardano.Wallet
@@ -3234,7 +3232,7 @@ instance IsServerError ErrMkTx where
             apiError err500 KeyNotFoundForAddress $ mconcat
                 [ "That's embarrassing. I couldn't sign the given transaction: "
                 , "I haven't found the corresponding private key for a known "
-                , "input address I should keep track of: ", showT addr, ". "
+                , "input address I should keep track of: ", showText addr, ". "
                 , "Retrying may work, but something really went wrong..."
                 ]
         ErrConstructedInvalidTx hint ->
@@ -3659,7 +3657,7 @@ instance IsServerError ErrSelectAssets where
                         , "because I need to select additional inputs and "
                         , "doing so will make the transaction too big. Try "
                         , "sending a smaller amount. I had already selected "
-                        , showT (length $ view #inputsSelected e), " inputs."
+                        , showText (length $ view #inputsSelected e), " inputs."
                         ]
                 InsufficientMinCoinValues xs ->
                     apiError err403 UtxoTooSmall $ mconcat
