@@ -21,6 +21,8 @@ import Cardano.Wallet.Primitive.Types.TokenQuantity
     ( TokenQuantity (..) )
 import Cardano.Wallet.Primitive.Types.TokenQuantity.Gen
     ( genTokenQuantityFullRange, shrinkTokenQuantityFullRange )
+import Data.Either
+    ( isLeft )
 import Data.Time.Clock.POSIX
     ( POSIXTime )
 import Data.Typeable

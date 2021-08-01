@@ -1146,7 +1146,7 @@ spec = parallel $ do
         it "Every constructor from ApiErrorCode has a corresponding type in the schema" $
             let res = fromJSON @SchemaApiErrorCode specification
                 errStr = case res of
-                    Error s -> s
+                    Data.Aeson.Error s -> s
                     _ -> ""
             in counterexample errStr $ res == Success SchemaApiErrorCode
 
