@@ -72,9 +72,6 @@ module Cardano.Wallet.Base
     -- * Text
     , Text
     , showText
-    -- * Wallet text-class
-    , ToText (..)
-    , FromText (..)
     -- * Formatting
     , Buildable (..)
     , pretty
