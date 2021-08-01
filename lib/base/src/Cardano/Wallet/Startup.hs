@@ -2,13 +2,13 @@
 {-# LANGUAGE LambdaCase #-}
 
 -- |
--- Copyright: © 2018-2020 IOHK
+-- Copyright: © 2018-2021 IOHK
 -- License: Apache-2.0
 --
 -- This module contains functions relating to startup and shutdown of the
--- @cardano-wallet serve@ program.
+-- @cardano-wallet@ programs.
 
-module Cardano.Startup
+module Cardano.Wallet.Startup
     (
     -- * Program startup
       withUtf8Encoding
@@ -31,10 +31,6 @@ module Cardano.Startup
 
 import Cardano.Wallet.Base
 
-import Cardano.BM.Data.Severity
-    ( Severity (..) )
-import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import GHC.IO.Encoding
     ( setFileSystemEncoding )
 import System.IO
@@ -51,13 +47,12 @@ import UnliftIO.MVar
     ( MVar, newEmptyMVar, putMVar, takeMVar )
 
 #ifdef WINDOWS
-import Cardano.Startup.Windows
+import Cardano.Wallet.Startup.Windows
 #else
-import Cardano.Startup.POSIX
+import Cardano.Wallet.Startup.POSIX
 #endif
 
 import qualified Data.ByteString as BS
-import qualified Data.Text as T
 
 {-------------------------------------------------------------------------------
                             Unicode Terminal Helpers
@@ -135,13 +130,6 @@ instance Buildable ShutdownHandlerLog where
             "Starting clean shutdown..."
         MsgShutdownError e ->
             "Error waiting for shutdown: "+||e||+". Shutting down..."
-
-instance HasPrivacyAnnotation ShutdownHandlerLog
-instance HasSeverityAnnotation ShutdownHandlerLog where
-    getSeverityAnnotation = \case
-        MsgShutdownHandler _ -> Debug
-        MsgShutdownEOF -> Notice
-        MsgShutdownError _ -> Error
 
 {-------------------------------------------------------------------------------
                           Termination Signal Handling

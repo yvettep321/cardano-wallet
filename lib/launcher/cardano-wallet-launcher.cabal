@@ -57,14 +57,6 @@ library
   exposed-modules:
       Cardano.Launcher
     , Cardano.Launcher.Node
-    , Cardano.Startup
-  if os(windows)
-    build-depends: Win32
-    other-modules: Cardano.Startup.Windows
-    cpp-options:   -DWINDOWS
-  else
-    build-depends: unix
-    other-modules: Cardano.Startup.POSIX
 
 test-suite unit
   import: base, project-config, exe

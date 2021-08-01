@@ -41,6 +41,8 @@ library
   import: base, project-config
   build-depends:
       async
+    , bytestring
+    , code-page
     , contra-tracer
     , deepseq
     , exceptions
@@ -49,6 +51,7 @@ library
     , formatting
     , generic-lens
     , pretty-simple
+    , process
     , profunctors
     , say
     , text
@@ -59,14 +62,27 @@ library
       src
   exposed-modules:
       Cardano.Wallet.Base
+      Cardano.Wallet.Startup
       UnliftIO.Compat
+  if os(windows)
+    build-depends: Win32
+    other-modules: Cardano.Wallet.Startup.Windows
+    cpp-options:   -DWINDOWS
+  else
+    build-depends: unix
+    other-modules: Cardano.Wallet.Startup.POSIX
 
 test-suite unit
   import: base, project-config, exe
   build-depends:
       cardano-wallet-base
+    , bytestring
+    , contra-tracer
     , hspec
+    , hspec-core
     , text
+    , unliftio-core
+    , unliftio
     , QuickCheck
   build-tool-depends:
       hspec-discover:hspec-discover
@@ -78,3 +94,4 @@ test-suite unit
       Main.hs
   other-modules:
       Cardano.Wallet.BaseSpec
+      Cardano.Wallet.StartupSpec

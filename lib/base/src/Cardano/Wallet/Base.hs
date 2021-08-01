@@ -87,6 +87,7 @@ module Cardano.Wallet.Base
     , Tracer (..)
     , contramap
     , traceWith
+    , nullTracer
     , say
     , sayErr
 
@@ -178,7 +179,7 @@ import UnliftIO.Exception
 
 -- iohk packages
 import Control.Tracer
-    ( Tracer (..), contramap, traceWith )
+    ( Tracer (..), contramap, nullTracer, traceWith )
 
 showText :: Show a => a -> Text
 showText = T.pack . show

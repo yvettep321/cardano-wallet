@@ -1,10 +1,10 @@
 -- |
--- Copyright: © 2018-2020 IOHK
+-- Copyright: © 2018-2021 IOHK
 -- License: Apache-2.0
 -- Portability: POSIX
 --
 
-module Cardano.Startup.POSIX
+module Cardano.Wallet.Startup.POSIX
     ( installSignalHandlers
     , setDefaultFilePermissions
     , restrictFileMode
@@ -13,8 +13,6 @@ module Cardano.Startup.POSIX
 
 import Cardano.Wallet.Base
 
-import Control.Monad
-    ( void )
 import Data.Bits
     ( (.|.) )
 import System.Posix.Files

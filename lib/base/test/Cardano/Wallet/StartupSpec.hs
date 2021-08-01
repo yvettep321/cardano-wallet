@@ -2,21 +2,19 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Copyright: © 2018-2020 IOHK
+-- Copyright: © 2018-2021 IOHK
 -- License: Apache-2.0
 --
 -- Unit tests for 'withShutdownHandler' using pipes within a single process.
 
-module Cardano.StartupSpec
+module Cardano.Wallet.StartupSpec
     ( spec
     ) where
 
 import Cardano.Wallet.Base
 
-import Cardano.Startup
+import Cardano.Wallet.Startup
     ( ShutdownHandlerLog (..), withShutdownHandler' )
-import Control.Tracer
-    ( nullTracer )
 import System.IO
     ( Handle, IOMode (..), hClose, hWaitForInput, stdin, withFile )
 import System.IO.Error
