@@ -10,7 +10,7 @@ module Test.Utils.Laws.PartialOrd
     ( partialOrdLaws
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Algebra.PartialOrd
     ( PartialOrd (..) )

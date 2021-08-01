@@ -8,7 +8,7 @@ module Test.Utils.FilePath
     ( PathElement (..)
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import System.FilePath.Windows
     ( makeValid )

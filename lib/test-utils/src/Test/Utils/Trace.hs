@@ -17,7 +17,7 @@ module Test.Utils.Trace
      , traceSpec
      ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Cardano.BM.Trace
     ( traceInTVarIO )

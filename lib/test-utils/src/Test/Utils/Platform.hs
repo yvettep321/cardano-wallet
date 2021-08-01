@@ -24,7 +24,7 @@ module Test.Utils.Platform
     , nullFileName
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import System.Exit
     ( ExitCode (..) )
