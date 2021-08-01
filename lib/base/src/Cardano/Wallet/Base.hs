@@ -87,6 +87,8 @@ module Cardano.Wallet.Base
     , Tracer (..)
     , contramap
     , traceWith
+    , say
+    , sayErr
 
     -- * Debugging
     , traceShowId
@@ -167,6 +169,8 @@ import Fmt
     ( blockListF, fmt, ordinalF, pretty, (+|), (+||), (|+), (||+) )
 import Formatting.Buildable
     ( Buildable (..) )
+import Say
+    ( say, sayErr )
 import Text.Pretty.Simple
     ( pPrint )
 import UnliftIO.Exception

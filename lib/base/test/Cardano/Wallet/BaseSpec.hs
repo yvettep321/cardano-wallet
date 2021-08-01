@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Cardano.Wallet.PreludeSpec (spec) where
+module Cardano.Wallet.BaseSpec (spec) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Test.Hspec
     ( Spec, describe, it )

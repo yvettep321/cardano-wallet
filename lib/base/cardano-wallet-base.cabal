@@ -50,6 +50,7 @@ library
     , generic-lens
     , pretty-simple
     , profunctors
+    , say
     , text
     , transformers
     , unliftio-core
@@ -76,4 +77,4 @@ test-suite unit
   main-is:
       Main.hs
   other-modules:
-      Cardano.Wallet.PreludeSpec
+      Cardano.Wallet.BaseSpec
