@@ -31,7 +31,7 @@ import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
     ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
-import Cardano.Startup
+import Cardano.Wallet.Startup
     ( killProcess )
 import Data.Either.Combinators
     ( leftToMaybe )
