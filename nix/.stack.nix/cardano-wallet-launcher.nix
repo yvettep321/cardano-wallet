@@ -38,12 +38,9 @@
           (hsPkgs."iohk-monitoring" or (errorHandler.buildDepError "iohk-monitoring"))
           (hsPkgs."process" or (errorHandler.buildDepError "process"))
           (hsPkgs."text" or (errorHandler.buildDepError "text"))
-          (hsPkgs."cardano-wallet-text-class" or (errorHandler.buildDepError "cardano-wallet-text-class"))
           (hsPkgs."unliftio" or (errorHandler.buildDepError "unliftio"))
           (hsPkgs."unliftio-core" or (errorHandler.buildDepError "unliftio-core"))
-          ] ++ (if system.isWindows
-          then [ (hsPkgs."Win32" or (errorHandler.buildDepError "Win32")) ]
-          else [ (hsPkgs."unix" or (errorHandler.buildDepError "unix")) ]);
+          ];
         buildable = true;
         };
       tests = {
@@ -63,7 +60,6 @@
             (hsPkgs."process" or (errorHandler.buildDepError "process"))
             (hsPkgs."retry" or (errorHandler.buildDepError "retry"))
             (hsPkgs."text" or (errorHandler.buildDepError "text"))
-            (hsPkgs."cardano-wallet-text-class" or (errorHandler.buildDepError "cardano-wallet-text-class"))
             (hsPkgs."time" or (errorHandler.buildDepError "time"))
             (hsPkgs."unliftio" or (errorHandler.buildDepError "unliftio"))
             ];
