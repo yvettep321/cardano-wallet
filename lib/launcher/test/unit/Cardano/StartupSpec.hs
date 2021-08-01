@@ -11,7 +11,7 @@ module Cardano.StartupSpec
     ( spec
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Cardano.Startup
     ( ShutdownHandlerLog (..), withShutdownHandler' )

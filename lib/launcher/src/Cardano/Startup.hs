@@ -29,7 +29,7 @@ module Cardano.Startup
     , ShutdownHandlerLog(..)
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Cardano.BM.Data.Severity
     ( Severity (..) )
@@ -126,16 +126,15 @@ data ShutdownHandlerLog
     | MsgShutdownError IOException
     deriving (Show, Eq)
 
-instance ToText ShutdownHandlerLog where
-    toText = \case
+instance Buildable ShutdownHandlerLog where
+    build = \case
         MsgShutdownHandler enabled ->
             "Cross-platform subprocess shutdown handler is "
             <> if enabled then "enabled." else "disabled."
         MsgShutdownEOF ->
             "Starting clean shutdown..."
         MsgShutdownError e ->
-            "Error waiting for shutdown: " <> T.pack (show e)
-            <> ". Shutting down..."
+            "Error waiting for shutdown: "+||e||+". Shutting down..."
 
 instance HasPrivacyAnnotation ShutdownHandlerLog
 instance HasSeverityAnnotation ShutdownHandlerLog where

@@ -50,7 +50,6 @@ library
     , iohk-monitoring
     , process
     , text
-    , cardano-wallet-text-class
     , unliftio
     , unliftio-core
   hs-source-dirs:
@@ -82,7 +81,6 @@ test-suite unit
     , process
     , retry
     , text
-    , cardano-wallet-text-class
     , time
     , unliftio
   build-tool-depends:

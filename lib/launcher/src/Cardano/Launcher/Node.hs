@@ -18,7 +18,7 @@ module Cardano.Launcher.Node
     , isWindows
     ) where
 
-import Cardano.Wallet.Prelude
+import Cardano.Wallet.Base
 
 import Cardano.Launcher
     ( LauncherLog, ProcessHasExited, withBackendCreateProcess )
@@ -30,8 +30,6 @@ import Data.List
     ( isPrefixOf )
 import Data.Maybe
     ( maybeToList )
-import Data.Text.Class
-    ( FromText (..), TextDecodingError (..), ToText (..) )
 import System.Environment
     ( getEnvironment )
 import System.FilePath
@@ -72,11 +70,8 @@ isValidWindowsPipeName name = slashPipe `isPrefixOf` name
   where
     slashPipe = "\\\\.\\pipe\\"
 
-instance ToText CardanoNodeConn where
-    toText = T.pack . nodeSocketFile
-
-instance FromText CardanoNodeConn where
-    fromText = first TextDecodingError . cardanoNodeConn . T.unpack
+instance Builable CardanoNodeConn where
+    toText = build . nodeSocketFile
 
 newtype NodePort = NodePort { unNodePort :: Int }
     deriving (Show, Eq)
