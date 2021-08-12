@@ -84,6 +84,7 @@ module Cardano.Wallet.Shelley.Compatibility
     , mkStakePoolsSummary
     , fromNonMyopicMemberRewards
     , RewardConstants
+    , StakePoolsData
     , rewardConstantsfromPParams
     , getProducer
 
@@ -797,7 +798,8 @@ fromRewardProvenancePool totalStake SL.RewardProvenancePool{..} =
 data RewardConstants = RewardConstants
     { _nOpt :: Natural
     , _a0   :: SL.NonNegativeInterval
-    }
+    } deriving (Eq, Show)
+type StakePoolsData = (RewardConstants, SL.RewardProvenance StandardCrypto)
 
 rewardConstantsfromPParams
     :: ( HasField "_nOpt" pparams Natural
@@ -807,11 +809,8 @@ rewardConstantsfromPParams
 rewardConstantsfromPParams pp =
     RewardConstants (getField @"_nOpt" pp) (getField @"_a0" pp)
 
-mkStakePoolsSummary
-    :: RewardConstants
-    -> SL.RewardProvenance StandardCrypto
-    -> W.StakePoolsSummary
-mkStakePoolsSummary RewardConstants{_a0,_nOpt} SL.RewardProvenance{totalStake,pools,r}
+mkStakePoolsSummary :: StakePoolsData -> W.StakePoolsSummary
+mkStakePoolsSummary (RewardConstants{_a0,_nOpt}, SL.RewardProvenance{totalStake,pools,r})
   = W.StakePoolsSummary
     { rewardParams = rp
     , pools
