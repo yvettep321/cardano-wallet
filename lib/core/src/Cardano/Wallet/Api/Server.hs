@@ -449,6 +449,7 @@ import Cardano.Wallet.Transaction
     , ErrOutputTokenBundleSizeExceedsLimit (..)
     , ErrOutputTokenQuantityExceedsLimit (..)
     , ErrSelectionCriteria (..)
+    , ErrUpdateSealedTx (..)
     , TransactionCtx (..)
     , TransactionLayer (..)
     , Withdrawal (..)
@@ -599,8 +600,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Network.Wai.Handler.WarpTLS as Warp
-
-import qualified Debug.Trace as TR
 
 -- | How the server should listen for incoming requests.
 data Listen
@@ -2038,7 +2037,11 @@ balanceTransaction _ ctx config (ApiT wid) body =
     else do
         ApiConstructTransaction _ cs _ <-
             constructTransaction ctx config (ApiT wid) $ toApiConstructTransactionData tx
-        let (sealedTxOutcoming, newfee) = TR.trace ("getInpsChange cs:"<>show (getInpsChange cs)) $ updateTx tl sealedTxIncoming (getInpsChange cs)
+        (sealedTxOutcoming, newfee) <-
+            case updateTx tl sealedTxIncoming (getInpsChange cs) of
+                Right result -> pure result
+                Left err ->
+                    liftHandler $ throwE $ ErrBalanceTxUpdateError err
         pure $ ApiConstructTransaction
             { transaction = ApiT sealedTxOutcoming
             , coinSelection = cs
@@ -3561,6 +3564,8 @@ instance IsServerError ErrBalanceTx where
                 [ "The transaction to be balanced has already all outputs covered. "
                 , "Please send a transaction that requires more inputs to be picked to be balanced."
                 ]
+        ErrBalanceTxUpdateError (ErrUpdateSealedTxBodyError hint) ->
+            apiError err500 CreatedInvalidTransaction hint
 
 instance IsServerError ErrRemoveTx where
     toServerError = \case

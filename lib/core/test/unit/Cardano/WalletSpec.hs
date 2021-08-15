@@ -1316,7 +1316,7 @@ dummyTransactionLayer = TransactionLayer
     , decodeTx = \_sealed ->
         Tx (Hash "") Nothing mempty mempty mempty mempty Nothing
     , updateTx = \sealed _insAndOuts ->
-            (sealed, 10000)
+            pure (sealed, 10000)
     }
 
 makeSealedTx :: Tx -> [(XPrv, Passphrase "encryption")] -> SealedTx
