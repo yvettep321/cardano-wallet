@@ -284,6 +284,7 @@ import qualified Cardano.Wallet.DB.Sqlite as Sqlite
 import qualified Cardano.Wallet.Primitive.Migration as Migration
 import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TokenBundle
 import qualified Cardano.Wallet.Primitive.Types.UTxOIndex as UTxOIndex
+import qualified Cardano.Wallet.Transaction as W
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as B8
@@ -1303,7 +1304,7 @@ dummyTransactionLayer = TransactionLayer
             x = view #witness $ keyStoreLookup keyStore mkWit txin
             mkWit sk _addr = sk
             tx = unsafeSealedTxFromBytes (B8.pack $ show $ fromJust x)
-        in SignTransactionResult tx [] []
+        in SignTransactionResult tx [] [] []
     , initSelectionCriteria =
         error "dummyTransactionLayer: initSelectionCriteria not implemented"
     , calcMinimumCost =
@@ -1313,7 +1314,7 @@ dummyTransactionLayer = TransactionLayer
     , constraints =
         error "dummyTransactionLayer: constraints not implemented"
     , decodeTx = \_sealed ->
-            Tx (Hash "") Nothing mempty mempty mempty Nothing
+        Tx (Hash "") Nothing mempty mempty mempty Nothing
     }
 
 
