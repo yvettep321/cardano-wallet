@@ -756,6 +756,7 @@ fromGenesisData g initialFunds =
                 ]
             , withdrawals = mempty
             , metadata = Nothing
+            , isValidScript = Nothing
             }
           where
             W.TxIn pseudoHash _ = fromShelleyTxIn $
@@ -865,6 +866,8 @@ fromShelleyTx tx =
             fromShelleyWdrl wdrls
         , metadata =
             fromShelleyMD <$> SL.strictMaybeToMaybe mmd
+        , isValidScript =
+            Nothing
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -895,6 +898,8 @@ fromAllegraTx tx =
             fromShelleyWdrl wdrls
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mmd
+        , isValidScript =
+            Nothing
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -929,6 +934,8 @@ fromMaryTx tx =
             fromShelleyWdrl wdrls
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mad
+        , isValidScript =
+            Nothing
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -973,6 +980,8 @@ fromAlonzoTxBodyAndAux bod mad =
             fromShelleyWdrl wdrls
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mad
+        , isValidScript =
+            Nothing
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -1018,8 +1027,9 @@ fromAlonzoTx
        , [W.DelegationCertificate]
        , [W.PoolCertificate]
        )
-fromAlonzoTx (Alonzo.ValidatedTx bod _wits _isValidating aux) =
-    fromAlonzoTxBodyAndAux bod aux
+fromAlonzoTx (Alonzo.ValidatedTx bod _wits (Alonzo.IsValid isValid) aux) =
+    (\(tx, d, p) -> (tx { W.isValidScript = Just isValid }, d, p))
+    $ fromAlonzoTxBodyAndAux bod aux
 
 fromCardanoValue :: HasCallStack => Cardano.Value -> TokenBundle.TokenBundle
 fromCardanoValue = uncurry TokenBundle.fromFlatList . extract
