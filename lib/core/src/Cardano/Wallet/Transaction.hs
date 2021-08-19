@@ -290,7 +290,8 @@ instance (Buildable wit, Buildable tx) => Buildable (SignTransactionResult psk s
 -- derived from the user's spending passphrasee. This data type pairs an
 -- encrypted signing key with the passphrase needed to decrypt it.
 --
--- We call this type "decrypted", because although the key is still encrypted, the passphrase is right there, so it may as well be decrypted.
+-- We call this type "decrypted", because although the key is still encrypted,
+-- the passphrase is right there, so it may as well be decrypted.
 --
 -- Use 'decryptSigningKey' to actually get the key which can be used for
 -- witnessing transactions.
