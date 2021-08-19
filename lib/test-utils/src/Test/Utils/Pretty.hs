@@ -41,7 +41,7 @@ instance Show a => ToText (Pretty a)
 pShowBuilder :: Show a => a -> Builder
 pShowBuilder = fromLazyText . pShow
 
--- | Like '===, but prettier.
+-- | Like '===', but prettier.
 infix 4 ====
 (====) :: (Eq a, Show a) => a -> a -> Property
 a ==== b = Pretty a === Pretty b
