@@ -2803,11 +2803,11 @@ mkRewardAccountBuilder ctx wid withdrawal =
             W.readRewardAccountDerivation @_ @s @k wrk wid
 
         case (withdrawal, rewardAccount) of
-            (Just _, Nothing) ->
-                liftHandler $ throwE ErrReadRewardAccountNotAShelleyWallet
-
             (Nothing, _) ->
                 pure (NoWithdrawal, selfRewardCredentials)
+
+            (Just _, Nothing) ->
+                liftHandler $ throwE ErrReadRewardAccountNotAShelleyWallet
 
             (Just SelfWithdrawal, Just (path, (_xpub, acct))) -> do
                 wdrl <- liftHandler $ W.queryRewardBalance @_ wrk acct
