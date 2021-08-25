@@ -67,7 +67,12 @@ import Cardano.Wallet.Primitive.CoinSelection.MA.RoundRobin
 import Cardano.Wallet.Primitive.Slotting
     ( PastHorizonException )
 import Cardano.Wallet.Primitive.Types
-    ( PoolId, ProtocolParameters, SlotNo (..), TokenBundleMaxSize (..), WalletId )
+    ( PoolId
+    , ProtocolParameters
+    , SlotNo (..)
+    , TokenBundleMaxSize (..)
+    , WalletId
+    )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
 import Cardano.Wallet.Primitive.Types.Coin
