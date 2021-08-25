@@ -134,6 +134,7 @@ import Cardano.Wallet.Transaction
     , TransactionLayer (..)
     , keyStoreLookup
     , keyStoreLookupStake
+    , withdrawalRewardAccount
     , withdrawalToCoin
     )
 import Data.Bifunctor
@@ -349,46 +350,35 @@ _decodeSealedTx (cardanoTx -> InAnyCardanoEra _era tx) = fromCardanoTx tx
 _mkTransactionBody
     :: Cardano.NetworkId
     -> (AnyCardanoEra, ProtocolParameters)
-    -> Maybe RewardAccount
     -> TransactionCtx
     -> SelectionResult TxOut
     -> Either ErrMkTransaction SealedTx
-_mkTransactionBody networkId (e@(AnyCardanoEra era), pp) rewardAcct ctx cs =
+_mkTransactionBody networkId (e@(AnyCardanoEra era), pp) ctx cs =
      case cardanoEraStyle era of
         Cardano.LegacyByronEra ->
             Left $ ErrMkTransactionInvalidEra e
         Cardano.ShelleyBasedEra era' ->
             sealedTxFromCardano' . Cardano.makeSignedTransaction mempty <$>
-                mkShelleyTransactionBody networkId rewardAcct pp ctx cs era'
+                mkShelleyTransactionBody networkId pp ctx cs era'
 
 mkShelleyTransactionBody
     :: forall era. Cardano.IsCardanoEra era
     => Cardano.NetworkId
-    -> Maybe RewardAccount
     -> ProtocolParameters
     -> TransactionCtx
     -> SelectionResult TxOut
     -> ShelleyBasedEra era
     -> Either ErrMkTransaction (Cardano.TxBody era)
-mkShelleyTransactionBody networkId rewardAcct pp ctx cs era =
+mkShelleyTransactionBody networkId pp ctx cs era =
     toCardanoTxBody era payload ttl wdrls cs fee
   where
     payload = TxPayload (view #txMetadata ctx) certs
     ttl = txTimeToLive ctx
-    wdrl = withdrawalToCoin $ view #txWithdrawal ctx
-    wdrls = maybe [] (mkWithdrawals networkId wdrl) rewardAcct
 
-    (deposits, certs) = case (view #txDelegationActions ctx, rewardAcct) of
-        (ds, Just a) -> (map getDeposit ds, map (mkDelegationCertificate a) ds)
-        _ -> ([], [])
+    (wdrls, certs, deposits) = mkShelleyTransactionDelegation networkId pp ctx
 
     feeGap = selectionDelta txOutCoin cs
-    fee = unsafeSubtractCoin cs feeGap (sumCoins deposits)
-
-    getDeposit = \case
-        RegisterKey -> Coin 0
-        Join _ -> stakeKeyDeposit pp
-        Quit -> Coin 0
+    fee = unsafeSubtractCoin cs feeGap deposits
 
     unsafeSubtractCoin
         :: (HasCallStack, Buildable x) => x -> Coin -> Coin -> Coin
@@ -401,16 +391,38 @@ mkShelleyTransactionBody networkId rewardAcct pp ctx cs era =
             , pretty x
             ]
 
-mkDelegationCertificate
-    :: RewardAccount
-        -- Reward account public key hash
-    -> DelegationAction
-        -- Pool Id to which we're planning to delegate
-    -> Cardano.Certificate
-mkDelegationCertificate rewardAcct = \case
-   Join poolId -> toStakePoolDlgCert rewardAcct poolId
-   RegisterKey -> toStakeKeyRegCert rewardAcct
-   Quit -> toStakeKeyDeregCert rewardAcct
+-- | Auxilliary function for 'mkShelleyTransaction' which constructs the
+-- transaction body parts which are relevant to the reward account and
+-- delegation.
+mkShelleyTransactionDelegation
+    :: NetworkId
+    -> ProtocolParameters
+    -> TransactionCtx
+    -> ([(Cardano.StakeAddress, Cardano.Lovelace)], [Cardano.Certificate], Coin)
+mkShelleyTransactionDelegation networkId pp (TransactionCtx wdrl delegs _ _) =
+    ( mapRewardAcct (mkWithdrawals networkId (withdrawalToCoin wdrl))
+    , mapRewardAcct (\acct -> map (mkDelegationCertificate acct) delegs)
+    , sumCoins (map getDeposit delegs) )
+  where
+    mapRewardAcct :: (RewardAccount -> [a]) -> [a]
+    mapRewardAcct f = maybe [] f (withdrawalRewardAccount wdrl)
+
+    getDeposit :: DelegationAction -> Coin
+    getDeposit = \case
+        RegisterKey -> Coin 0
+        Join _ -> stakeKeyDeposit pp
+        Quit -> Coin 0
+
+    mkDelegationCertificate
+        :: RewardAccount
+        -- ^ Reward account public key hash
+        -> DelegationAction
+        -- ^ Pool Id to which we're planning to delegate
+        -> Cardano.Certificate
+    mkDelegationCertificate rewardAcct = \case
+       Join poolId -> toStakePoolDlgCert rewardAcct poolId
+       RegisterKey -> toStakeKeyRegCert rewardAcct
+       Quit -> toStakeKeyDeregCert rewardAcct
 
 _calcMinimumCoinValue
     :: ProtocolParameters

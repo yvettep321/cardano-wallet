@@ -113,10 +113,8 @@ data TransactionLayer k tx = TransactionLayer
         :: (AnyCardanoEra, ProtocolParameters)
             -- Era and protocol parameters for which the transaction should be
             -- created.
-        -> Maybe RewardAccount
-            -- Hash of stake address public key, if there is one.
         -> TransactionCtx
-            -- An additional context about the transaction
+            -- Additional context about the transaction.
         -> SelectionResult TxOut
             -- A balanced coin selection where all change addresses have been
             -- assigned.
@@ -196,8 +194,7 @@ mkTransaction
     -- assigned.
     -> Either ErrMkTransaction (Tx, tx)
 mkTransaction tl eraPP keyStore ctx cs = do
-    let rewardAcct = withdrawalRewardAccount (txWithdrawal ctx)
-    unsigned <- mkTransactionBody tl eraPP rewardAcct ctx cs
+    unsigned <- mkTransactionBody tl eraPP ctx cs
     let signed = view #tx $ mkSignedTransaction tl keyStore unsigned
     pure (addResolvedInputs cs (decodeTx tl signed), signed)
 
@@ -212,26 +209,33 @@ addResolvedInputs cs tx = tx
 data TransactionCtx = TransactionCtx
     { txWithdrawal :: Withdrawal
     -- ^ Withdrawal amount from a reward account, can be zero.
+    , txDelegationActions :: [DelegationAction]
+    -- ^ Joining and/or leaving stake pools.
     , txMetadata :: Maybe TxMetadata
     -- ^ User or application-defined metadata to embed in the transaction.
     , txTimeToLive :: SlotNo
     -- ^ Transaction expiry (TTL) slot.
-    , txDelegationActions :: [DelegationAction]
-    -- ^ Joining and/or leaving stake pools.
     } deriving (Show, Generic, Eq)
 
+-- | A specification from the user as to whether a transaction should include a
+-- reward account withdrawal, and if so, from which reward account.
 data Withdrawal
     = WithdrawalSelf !RewardAccount !(NonEmpty DerivationIndex) !Coin
+    -- ^ Withdraw from a reward account belonging to this wallet.
     | WithdrawalExternal !RewardAccount !(NonEmpty DerivationIndex) !Coin
+    -- ^ Withdraw from a reward account belonging to another wallet.
     | NoWithdrawal
+    -- ^ Don't withdraw anything in this transaction.
     deriving (Show, Eq)
 
+-- | The amount expected to be withdrawn, or zero if no withdrawal.
 withdrawalToCoin :: Withdrawal -> Coin
 withdrawalToCoin = \case
     WithdrawalSelf _ _ c -> c
     WithdrawalExternal _ _ c -> c
     NoWithdrawal -> Coin 0
 
+-- | The reward account to use for this withdrawal (if any).
 withdrawalRewardAccount :: Withdrawal -> Maybe RewardAccount
 withdrawalRewardAccount = \case
     WithdrawalSelf acct _ _ -> Just acct

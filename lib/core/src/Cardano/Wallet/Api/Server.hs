@@ -2107,7 +2107,7 @@ constructTransaction ctx config (ApiT wid) body = do
             Just (ApiPaymentAll _) -> do
                 liftHandler $ throwE $ ErrConstructTxNotImplemented "ADP-909"
 
-        tx <- liftHandler $ W.constructTransaction @_ @s @k wrk wid txCtx sel
+        tx <- liftHandler $ W.constructTransaction @_ @k wrk txCtx sel
         pure $ ApiConstructTransaction
             { transaction = ApiT tx
             , coinSelection = mkApiCoinSelection [] Nothing md sel'

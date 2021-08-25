@@ -1586,13 +1586,14 @@ withKeyStore ctx wid mkRwdAcct pwd action = do
 
     withRootKey @_ @s ctx wid pwd ErrWitnessTxWithRootKey $ \xprv scheme -> do
         let pwdP = preparePassphrase scheme pwd
-        let stakeCreds acct = uncurry DecryptedSigningKey <$>
+            stakeCreds acct = uncurry DecryptedSigningKey <$>
                 if Just acct == rewardAcct
                 -- using stake credentials from self
                 then mkRwdAcct (xprv, pwdP)
                 -- using external stake credentials
-                else mkRwdAcct (error "xprv", mempty)
-        let keyFrom = fmap (uncurry DecryptedSigningKey) . isOwned adState (xprv, pwdP)
+                else mkRwdAcct (xprv, mempty)
+            keyFrom = fmap (uncurry DecryptedSigningKey)
+                . isOwned adState (xprv, pwdP)
         liftIO $ action $ SignTransactionKeyStore{stakeCreds,resolver,keyFrom}
 
 -- | Produce witnesses and construct a transaction from a given selection.
@@ -1621,7 +1622,7 @@ buildAndSignTransaction
     -> ExceptT ErrSignPayment IO (Tx, TxMeta, UTCTime, SealedTx)
 buildAndSignTransaction ctx wid mkRwdAcct pwd txCtx sel = do
     unsigned <- withExceptT ErrSignPaymentConstructTx $
-        constructTransaction @ctx @s @k ctx wid txCtx sel
+        constructTransaction @ctx @k ctx txCtx sel
     sealed <- withExceptT ErrSignPaymentSignTx $
         signTransaction @ctx @s @k ctx wid mkRwdAcct pwd unsigned
     getFullTxInfo @ctx @s @k ctx wid txCtx sel sealed
@@ -1654,23 +1655,18 @@ getFullTxInfo ctx wid txCtx sel sealed = db & \DBLayer{..} -> do
 
 -- | Construct an unsigned transaction from a given selection.
 constructTransaction
-    :: forall ctx s k.
+    :: forall ctx k.
         ( HasTransactionLayer k ctx
-        , HasDBLayer IO s k ctx
         , HasNetworkLayer IO ctx
-        , GetRewardAccount s k
         )
     => ctx
-    -> WalletId
     -> TransactionCtx
     -> SelectionResult TxOut
     -> ExceptT ErrConstructTx IO SealedTx
-constructTransaction ctx wid txCtx sel = do
-    rewardAcct <- withExceptT ErrConstructTxNoSuchWallet $
-        readRewardAccount @ctx @s @k ctx wid
+constructTransaction ctx txCtx sel = do
     eraPP <- liftIO $ (,) <$> currentNodeEra nl <*> currentProtocolParameters nl
     withExceptT ErrConstructTxBody $ ExceptT $ pure $
-        mkTransactionBody tl eraPP rewardAcct txCtx sel
+        mkTransactionBody tl eraPP txCtx sel
   where
     tl = ctx ^. transactionLayer @k
     nl = ctx ^. networkLayer

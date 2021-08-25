@@ -623,8 +623,9 @@ walletUpdatePassphraseDate wallet (xprv, pwd) = monadicIO $ liftIO $ do
     pause = threadDelay 500
 
 walletKeyIsReencrypted
-    :: (WalletId, WalletName)
-    -> (ShelleyKey 'RootK XPrv, Passphrase "encryption")
+    :: forall k. k ~ ShelleyKey
+    => (WalletId, WalletName)
+    -> (k 'RootK XPrv, Passphrase "encryption")
     -> Passphrase "raw"
     -> Property
 walletKeyIsReencrypted (wid, wname) (xprv, pwd) newPwd =
@@ -637,8 +638,7 @@ walletKeyIsReencrypted (wid, wname) (xprv, pwd) newPwd =
                 (getRawKey $ deriveRewardAccount pwdP rootK, pwdP)
         selection' <- unsafeRunExceptT $
             W.assignChangeAddressesAndUpdateDb wl wid () selection
-        tx <- unsafeRunExceptT $
-            W.constructTransaction @_ @_ @_ wl wid ctx selection'
+        tx <- unsafeRunExceptT $ W.constructTransaction @_ @k wl ctx selection'
         sigOld <- unsafeRunExceptT $ W.signTransaction @_ @_ @_ wl wid credentials (coerce pwd) tx
         unsafeRunExceptT $ W.updateWalletPassphrase wl wid (coerce pwd, newPwd)
         sigFail <- runExceptT $ W.signTransaction @_ @_ @_ wl wid credentials (coerce pwd) tx
@@ -1297,7 +1297,7 @@ setupFixture (wid, wname, wstate) = do
 -- implements a fake signer that still produces sort of witnesses
 dummyTransactionLayer :: TransactionLayer ShelleyKey SealedTx
 dummyTransactionLayer = TransactionLayer
-    { mkTransactionBody = \_ _ _ctx cs -> do
+    { mkTransactionBody = \_ _ctx cs -> do
         pure $ unsafeSealedTxFromBytes $ B8.pack $ show cs
     , mkSignedTransaction = \keyStore _sealed ->
         let txin = TxIn (Hash "eb4ab6028bd0ac971809d514c92db1") 1
