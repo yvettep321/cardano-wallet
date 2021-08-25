@@ -44,7 +44,6 @@ module Cardano.Wallet.Transaction
 
     -- * Errors
     , ErrSignTx (..)
-    , ErrDecodeSignedTx (..)
     , ErrSelectionCriteria (..)
     , ErrOutputTokenBundleSizeExceedsLimit (..)
     , ErrOutputTokenQuantityExceedsLimit (..)
@@ -395,12 +394,6 @@ data ErrOutputTokenQuantityExceedsLimit = ErrOutputTokenQuantityExceedsLimit
       -- ^ The maximum allowable token quantity.
     }
     deriving (Eq, Generic, Show)
-
--- | Error while trying to decode externally signed transaction
-data ErrDecodeSignedTx
-    = ErrDecodeSignedTxWrongPayload Text
-    | ErrDecodeSignedTxNotSupported
-    deriving (Generic, Show, Eq)
 
 data ErrMkTransaction
     = ErrMkTransactionNoSuchWallet WalletId

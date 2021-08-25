@@ -135,7 +135,6 @@ import Cardano.Wallet
     , ErrConstructTx (..)
     , ErrCreateMigrationPlan (..)
     , ErrCreateRandomAddress (..)
-    , ErrDecodeSignedTx (..)
     , ErrDerivePublicKey (..)
     , ErrFetchRewards (..)
     , ErrGetTransaction (..)
@@ -158,7 +157,6 @@ import Cardano.Wallet
     , ErrSignTx (..)
     , ErrStakePoolDelegation (..)
     , ErrStartTimeLaterThanEndTime (..)
-    , ErrSubmitExternalTx (..)
     , ErrSubmitTx (..)
     , ErrUpdatePassphrase (..)
     , ErrWalletAlreadyExists (..)
@@ -3476,28 +3474,6 @@ instance IsServerError ErrConstructTx where
 instance IsServerError ErrMintBurnAssets where
     toServerError = \case
         ErrMintBurnNotImplemented msg -> apiError err501 NotImplemented msg
-
-instance IsServerError ErrDecodeSignedTx where
-    toServerError = \case
-        ErrDecodeSignedTxWrongPayload _ ->
-            apiError err400 MalformedTxPayload $ mconcat
-                [ "I couldn't verify that the payload has the correct binary "
-                , "format. Therefore I couldn't send it to the node. Please "
-                , "check the format and try again."
-                ]
-        ErrDecodeSignedTxNotSupported ->
-            apiError err404 UnexpectedError $ mconcat
-                [ "This endpoint is not supported by the backend currently "
-                , "in use. Please try a different backend."
-                ]
-
-instance IsServerError ErrSubmitExternalTx where
-    toServerError = \case
-        ErrSubmitExternalTxNetwork e -> toServerError e
-        ErrSubmitExternalTxDecode e -> (toServerError e)
-            { errHTTPCode = 400
-            , errReasonPhrase = errReasonPhrase err400
-            }
 
 instance IsServerError ErrRemoveTx where
     toServerError = \case

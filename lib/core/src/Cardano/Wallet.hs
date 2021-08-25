@@ -158,10 +158,8 @@ module Cardano.Wallet
     , runLocalTxSubmissionPool
     , ErrSignTx (..)
     , ErrSubmitTx (..)
-    , ErrSubmitExternalTx (..)
     , ErrRemoveTx (..)
     , ErrPostTx (..)
-    , ErrDecodeSignedTx (..)
     , ErrListTransactions (..)
     , ErrGetTransaction (..)
     , ErrNoSuchTransaction (..)
@@ -386,7 +384,6 @@ import Cardano.Wallet.Transaction
     , DelegationAction (..)
     , ErrCannotJoin (..)
     , ErrCannotQuit (..)
-    , ErrDecodeSignedTx (..)
     , ErrMkTransaction
     , ErrSelectionCriteria (..)
     , ErrSignTx (..)
@@ -1789,11 +1786,9 @@ submitExternalTx
         )
     => ctx
     -> SealedTx
-    -> ExceptT ErrSubmitExternalTx IO Tx
+    -> ExceptT ErrPostTx IO Tx
 submitExternalTx ctx sealedTx = do
-    withExceptT ErrSubmitExternalTxNetwork $
-        traceResult (tx ^. #txId) $
-            postTx nw sealedTx
+    traceResult (tx ^. #txId) $ postTx nw sealedTx
     pure tx
   where
     tx = decodeTx tl sealedTx
@@ -2651,13 +2646,6 @@ data ErrSubmitTx
     = ErrSubmitTxNetwork ErrPostTx
     | ErrSubmitTxNoSuchWallet ErrNoSuchWallet
     | ErrSubmitTxImpossible ErrNoSuchTransaction
-    deriving (Show, Eq)
-
--- | Errors that can occur when submitting an externally-signed transaction
---   to the network.
-data ErrSubmitExternalTx
-    = ErrSubmitExternalTxNetwork ErrPostTx
-    | ErrSubmitExternalTxDecode ErrDecodeSignedTx
     deriving (Show, Eq)
 
 -- | Errors that can occur when trying to change a wallet's passphrase.
