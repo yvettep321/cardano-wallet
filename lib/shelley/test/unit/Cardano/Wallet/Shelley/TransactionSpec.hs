@@ -118,8 +118,7 @@ import Cardano.Wallet.Shelley.Compatibility
     , shelleyToCardanoEra
     )
 import Cardano.Wallet.Shelley.Transaction
-    ( TxPayload (..)
-    , TxSkeleton (..)
+    ( TxSkeleton (..)
     , TxWitnessTag (..)
     , TxWitnessTagFor
     , estimateTxCost
@@ -631,8 +630,7 @@ binaryCalculationsSpec' era =
           ledgerTx = Cardano.makeSignedTransaction addrWits unsigned
           addrWits = map (mkByronWitness unsigned net Nothing) pairs
           fee = selectionDelta txOutCoin cs
-          payload = TxPayload md mempty
-          Right unsigned = toCardanoTxBody era payload slotNo [] cs fee
+          Right unsigned = toCardanoTxBody era md mempty slotNo [] cs fee
           cs = SelectionResult
             { inputsSelected = NE.fromList inps
             , extraCoinSource = Nothing
@@ -710,8 +708,7 @@ makeShelleyTx era testCase = Cardano.makeSignedTransaction addrWits unsigned
     DecodeSetup utxo outs md slotNo pairs _netwk = testCase
     inps = Map.toList $ unUTxO utxo
     fee = selectionDelta txOutCoin cs
-    payload = TxPayload md mempty
-    Right unsigned = toCardanoTxBody era payload slotNo [] cs fee
+    Right unsigned = toCardanoTxBody era md mempty slotNo [] cs fee
     addrWits = map (mkShelleyKeyWitness unsigned) pairs
     cs = SelectionResult
         { inputsSelected = NE.fromList inps
@@ -743,8 +740,7 @@ makeByronTx era testCase = Cardano.makeSignedTransaction byronWits unsigned
     ForByron (DecodeSetup utxo outs _ slotNo pairs ntwrk) = testCase
     inps = Map.toList $ unUTxO utxo
     fee = selectionDelta txOutCoin cs
-    payload = TxPayload Nothing []
-    Right unsigned = toCardanoTxBody era payload slotNo [] cs fee
+    Right unsigned = toCardanoTxBody era Nothing [] slotNo [] cs fee
     byronWits = map (mkByronWitness unsigned ntwrk Nothing) pairs
     cs = SelectionResult
         { inputsSelected = NE.fromList inps

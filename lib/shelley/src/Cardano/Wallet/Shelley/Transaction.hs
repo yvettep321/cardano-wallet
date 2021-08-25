@@ -28,7 +28,6 @@ module Cardano.Wallet.Shelley.Transaction
     ( newTransactionLayer
 
     -- * Internals
-    , TxPayload (..)
     , TxSkeleton (..)
     , TxWitnessTag (..)
     , TxWitnessTagFor (..)
@@ -175,24 +174,8 @@ import qualified Codec.CBOR.Write as CBOR
 import qualified Data.ByteString as BS
 import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-
-
--- | Type encapsulating what we need to know to add things -- payloads,
--- certificates -- to a transaction.
---
--- Designed to allow us to have /one/ @mkTx@ which doesn't care whether we
--- include certificates or not.
-data TxPayload era = TxPayload
-    { _metadata ::  Maybe Cardano.TxMetadata
-      -- ^ User or application-defined metadata to be included in the
-      -- transaction.
-
-    , _certificates :: [Cardano.Certificate]
-      -- ^ Certificates to be included in the transactions.
-    }
 
 data TxWitnessTag
     = TxWitnessByronUTxO WalletStyle
@@ -370,9 +353,8 @@ mkShelleyTransactionBody
     -> ShelleyBasedEra era
     -> Either ErrMkTransaction (Cardano.TxBody era)
 mkShelleyTransactionBody networkId pp ctx cs era =
-    toCardanoTxBody era payload ttl wdrls cs fee
+    toCardanoTxBody era (view #txMetadata ctx) certs ttl wdrls cs fee
   where
-    payload = TxPayload (view #txMetadata ctx) certs
     ttl = txTimeToLive ctx
 
     (wdrls, certs, deposits) = mkShelleyTransactionDelegation networkId pp ctx
@@ -1182,13 +1164,20 @@ sumVia f = F.foldl' (\t -> (t +) . f) 0
 toCardanoTxBody
     :: forall era. Cardano.IsCardanoEra era
     => ShelleyBasedEra era
-    -> TxPayload era
+    -> Maybe Cardano.TxMetadata
+    -- ^ User or application-defined metadata to be included in the transaction.
+    -> [Cardano.Certificate]
+    -- ^ Certificates to be included in the transactions.
     -> Cardano.SlotNo
+    -- ^ Transaction expiry.
     -> [(Cardano.StakeAddress, Cardano.Lovelace)]
+    -- ^ Reward account withdrawals.
     -> SelectionResult TxOut
+    -- ^ Coin selection.
     -> Coin
+    -- ^ Fee.
     -> Either ErrMkTransaction (Cardano.TxBody era)
-toCardanoTxBody era (TxPayload md certs) ttl wdrl cs fee =
+toCardanoTxBody era md certs ttl wdrl cs fee =
     -- TODO: It would be nice to have a non-validating variant of makeTransactionBody.
     first toErr $ Cardano.makeTransactionBody $ Cardano.TxBodyContent
     { Cardano.txIns =
