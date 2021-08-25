@@ -2845,7 +2845,7 @@ mkApiCoinSelection deps mcerts metadata cs =
         , outputs = mkApiOutput <$> view #unsignedOutputs cs
         , change = mkApiChange <$> view #unsignedChange cs
         , collateral = mkApiCollateral <$> view #unsignedCollateral cs
-        , withdrawals = mkApiWithdrawal <$> view #unsignedWithdrawals cs
+        , withdrawals = mkWithdrawal <$> view #unsignedWithdrawals cs
         , certificates = NE.map (uncurry mkCertificate) <$> mcerts
         , deposits = mkApiCoin <$> deps
         , metadata = ApiBytesT . serialiseToCBOR <$> metadata
@@ -2861,8 +2861,7 @@ mkApiCoinSelection deps mcerts metadata cs =
         Quit -> Api.QuitPool stakePath
 
     mkApiInput :: input -> ApiCoinSelectionInput n
-    mkApiInput
-        (TxIn txid index, TxOut addr (TokenBundle amount assets), path) =
+    mkApiInput (TxIn txid index, TxOut addr (TokenBundle amount assets), path) =
         ApiCoinSelectionInput
             { id = ApiT txid
             , index = index
@@ -2879,21 +2878,15 @@ mkApiCoinSelection deps mcerts metadata cs =
         (ApiT assets)
 
     mkApiChange :: change -> ApiCoinSelectionChange n
-    mkApiChange txChange =
-        ApiCoinSelectionChange
-            { address =
-                (ApiT $ view #address txChange, Proxy @n)
-            , amount =
-                coinToQuantity $ view #amount txChange
-            , assets =
-                ApiT $ view #assets txChange
-            , derivationPath =
-                ApiT <$> view #derivationPath txChange
-            }
+    mkApiChange txChange = ApiCoinSelectionChange
+        { address = (ApiT $ view #address txChange, Proxy @n)
+        , amount = coinToQuantity $ view #amount txChange
+        , assets = ApiT $ view #assets txChange
+        , derivationPath = ApiT <$> view #derivationPath txChange
+        }
 
     mkApiCollateral :: input -> ApiCoinSelectionCollateral n
-    mkApiCollateral
-        (TxIn txid index, TxOut addr (TokenBundle amount _), path) =
+    mkApiCollateral (TxIn txid index, TxOut addr (TokenBundle amount _), path) =
         ApiCoinSelectionCollateral
             { id = ApiT txid
             , index = index
@@ -2902,16 +2895,12 @@ mkApiCoinSelection deps mcerts metadata cs =
             , derivationPath = ApiT <$> path
             }
 
-    mkApiWithdrawal :: withdrawal -> ApiCoinSelectionWithdrawal n
-    mkApiWithdrawal (rewardAcct, wdrl, path) =
-        ApiCoinSelectionWithdrawal
-            { stakeAddress =
-                (ApiT rewardAcct, Proxy @n)
-            , amount =
-                coinToQuantity wdrl
-            , derivationPath =
-                ApiT <$> path
-            }
+    mkWithdrawal :: withdrawal -> ApiCoinSelectionWithdrawal n
+    mkWithdrawal (rewardAcct, wdrl, path) = ApiCoinSelectionWithdrawal
+        { stakeAddress = (ApiT rewardAcct, Proxy @n)
+        , amount = coinToQuantity wdrl
+        , derivationPath = ApiT <$> path
+        }
 
 data MkApiTransactionParams = MkApiTransactionParams
     { txId :: Hash "Tx"

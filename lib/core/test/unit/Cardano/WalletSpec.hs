@@ -1314,7 +1314,7 @@ dummyTransactionLayer = TransactionLayer
     , constraints =
         error "dummyTransactionLayer: constraints not implemented"
     , decodeTx = \_sealed ->
-        Tx (Hash "") Nothing mempty mempty mempty Nothing
+        Tx (Hash "") Nothing mempty mempty mempty mempty Nothing
     }
 
 
@@ -1382,41 +1382,36 @@ makeSealedTx tx wits =
           safeCast :: Word64 -> Integer
           safeCast = fromIntegral
 
-    constructTxBody (Tx _ _ inpsSelected outsCovered _ _) ttl = Cardano.makeTransactionBody $ Cardano.TxBodyContent
-        { Cardano.txIns =
-                (,Cardano.BuildTxWith (Cardano.KeyWitness Cardano.KeyWitnessForSpending))
-                . toCardanoTxIn
-                . fst <$> F.toList inpsSelected
-
+    constructTxBody (Tx _ _ _ inpsSelected outsCovered _ _) ttl =
+        Cardano.makeTransactionBody $ Cardano.TxBodyContent
+        { Cardano.txIns = constructTxIn <$> F.toList inpsSelected
         , Cardano.txOuts = toMaryTxOut <$> outsCovered
-
         , Cardano.txWithdrawals = Cardano.TxWithdrawalsNone
-
         , txInsCollateral = Cardano.TxInsCollateralNone
-
         , txProtocolParams = Cardano.BuildTxWith Nothing
-
         , txExtraScriptData = Cardano.BuildTxWith Cardano.TxExtraScriptDataNone
-
         , txExtraKeyWits = Cardano.TxExtraKeyWitnessesNone
-
         , Cardano.txCertificates = Cardano.TxCertificatesNone
-
-        , Cardano.txFee = Cardano.TxFeeExplicit Cardano.TxFeesExplicitInMaryEra (toCardanoLovelace (Coin 20000))
-
+        , Cardano.txFee = Cardano.TxFeeExplicit
+            Cardano.TxFeesExplicitInMaryEra
+            (toCardanoLovelace (Coin 20000))
         , Cardano.txValidityRange =
-                ( Cardano.TxValidityNoLowerBound
-                , Cardano.TxValidityUpperBound Cardano.ValidityUpperBoundInMaryEra ttl
-                )
-
+            ( Cardano.TxValidityNoLowerBound
+            , Cardano.TxValidityUpperBound
+                Cardano.ValidityUpperBoundInMaryEra ttl )
         , Cardano.txMetadata = Cardano.TxMetadataNone
-
         , Cardano.txAuxScripts = Cardano.TxAuxScriptsNone
-
         , Cardano.txUpdateProposal = Cardano.TxUpdateProposalNone
-
         , Cardano.txMintValue = Cardano.TxMintNone
+        , Cardano.txScriptValidity = Cardano.BuildTxWith
+            Cardano.TxScriptValidityNone
         }
+
+    constructTxIn = fmap Cardano.BuildTxWith
+        . (, (Cardano.KeyWitness Cardano.KeyWitnessForSpending))
+        . toCardanoTxIn
+        . fst
+
 
 mockNetworkLayer :: Monad m => NetworkLayer m block
 mockNetworkLayer = dummyNetworkLayer

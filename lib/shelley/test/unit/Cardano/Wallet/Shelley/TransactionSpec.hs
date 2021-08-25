@@ -115,7 +115,6 @@ import Cardano.Wallet.Shelley.Compatibility
     ( AnyShelleyBasedEra (..)
     , computeTokenBundleSerializedLengthBytes
     , getShelleyBasedEra
-    , maxTokenBundleSerializedLengthBytes
     , shelleyToCardanoEra
     )
 import Cardano.Wallet.Shelley.Transaction
@@ -641,7 +640,7 @@ binaryCalculationsSpec' era =
             , changeGenerated = chgs
             , utxoRemaining = UTxOIndex.empty
             }
-          inps = Map.toList $ getUTxO utxo
+          inps = Map.toList $ unUTxO utxo
 
 transactionConstraintsSpec :: Spec
 transactionConstraintsSpec = describe "Transaction constraints" $ do
@@ -709,7 +708,7 @@ makeShelleyTx :: IsShelleyBasedEra era => ShelleyBasedEra era -> DecodeSetup -> 
 makeShelleyTx era testCase = Cardano.makeSignedTransaction addrWits unsigned
   where
     DecodeSetup utxo outs md slotNo pairs _netwk = testCase
-    inps = Map.toList $ getUTxO utxo
+    inps = Map.toList $ unUTxO utxo
     fee = selectionDelta txOutCoin cs
     payload = TxPayload md mempty
     Right unsigned = toCardanoTxBody era payload slotNo [] cs fee
@@ -742,7 +741,7 @@ makeByronTx :: IsShelleyBasedEra era => ShelleyBasedEra era -> ForByron DecodeSe
 makeByronTx era testCase = Cardano.makeSignedTransaction byronWits unsigned
   where
     ForByron (DecodeSetup utxo outs _ slotNo pairs ntwrk) = testCase
-    inps = Map.toList $ getUTxO utxo
+    inps = Map.toList $ unUTxO utxo
     fee = selectionDelta txOutCoin cs
     payload = TxPayload Nothing []
     Right unsigned = toCardanoTxBody era payload slotNo [] cs fee
@@ -814,7 +813,7 @@ instance Arbitrary DecodeSetup where
             <$> listOf1 arbitrary
             <*> arbitrary
             <*> arbitrary
-            <*> vectorOf (Map.size $ getUTxO utxo) arbitrary
+            <*> vectorOf (Map.size $ unUTxO utxo) arbitrary
             <*> arbitrary
 
     shrink (DecodeSetup i o m t k n) =
