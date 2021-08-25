@@ -1216,7 +1216,7 @@ toCardanoTxBody era (TxPayload md certs) ttl wdrl cs fee =
         -- our tx uses scripts?
         Cardano.BuildTxWith Nothing
 
-    , txScriptValidity =
+    , txScriptValidity = Cardano.BuildTxWith
         Cardano.TxScriptValidityNone
 
     , txExtraScriptData = Cardano.BuildTxWith Cardano.TxExtraScriptDataNone
