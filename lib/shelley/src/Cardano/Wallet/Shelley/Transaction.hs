@@ -130,11 +130,10 @@ import Cardano.Wallet.Transaction
     , ErrSelectionCriteria (..)
     , SignTransactionKeyStore (..)
     , SignTransactionResult (..)
-    , SignTransactionWitness (..)
     , TransactionCtx (..)
     , TransactionLayer (..)
     , keyStoreLookup
-    , keyStoreLookupWithdrawal
+    , keyStoreLookupStake
     , withdrawalToCoin
     )
 import Data.Bifunctor
@@ -225,11 +224,11 @@ _mkSignedTransaction
         , WalletKey k
         )
     => Cardano.NetworkId
-    -> SignTransactionKeyStore (k 'AddressK XPrv)
+    -> SignTransactionKeyStore (k 'AddressK XPrv) XPrv
     -- ^ Key store
     -> SealedTx
     -- ^ The unsigned transaction
-    -> SignTransactionResult (k 'AddressK XPrv) (InAnyCardanoEra Cardano.KeyWitness) SealedTx
+    -> SignTransactionResult (k 'AddressK XPrv) XPrv (InAnyCardanoEra Cardano.KeyWitness) SealedTx
 _mkSignedTransaction networkId keyStore sealed = case view #cardanoTx sealed of
     InAnyCardanoEra era tx -> case cardanoEraStyle era of
         Cardano.LegacyByronEra ->
@@ -245,14 +244,14 @@ mkSignedShelleyTransaction
         , IsShelleyBasedEra era
         )
     => Cardano.NetworkId
-    -> SignTransactionKeyStore (k 'AddressK XPrv)
+    -> SignTransactionKeyStore (k 'AddressK XPrv) XPrv
     -- ^ Credentials for signing.
     -> Cardano.Tx era
     -- ^ The transaction to be signed. May already have some witnesses.
-    -> SignTransactionResult (k 'AddressK XPrv) (Cardano.KeyWitness era) (Cardano.Tx era)
+    -> SignTransactionResult (k 'AddressK XPrv) XPrv (Cardano.KeyWitness era) (Cardano.Tx era)
 mkSignedShelleyTransaction networkId keyStore tx = SignTransactionResult
     { tx = Cardano.makeSignedTransaction
-        (mapMaybe witness addrWits ++ map snd (wdrlWits ++ certWits))
+        (mapMaybe (view #witness) addrWits ++ mapMaybe (view #witness) (wdrlWits ++ certWits))
         body
     , addressWitnesses = addrWits
     , withdrawalWitnesses = wdrlWits
@@ -270,7 +269,7 @@ mkSignedShelleyTransaction networkId keyStore tx = SignTransactionResult
         TxWitnessByronUTxO Icarus -> mkByronWitness body networkId Nothing sk
         TxWitnessByronUTxO Byron -> mkByronWitness body networkId (Just addr) sk
 
-    mkStakeWit = keyStoreLookupWithdrawal keyStore (mkShelleyKeyWitness body)
+    mkStakeWit = keyStoreLookupStake keyStore (mkShelleyKeyWitness body)
 
     ----------------------------------------------------------------------------
     -- Payment address witnesses
@@ -292,8 +291,7 @@ mkSignedShelleyTransaction networkId keyStore tx = SignTransactionResult
                 | (addr, _lovelace, _buildTx) <- ws ]
             TxWitnessByronUTxO{} -> []
 
-
-    wdrlWits = mapMaybe mkStakeWit wdrls
+    wdrlWits = map mkStakeWit wdrls
 
     ----------------------------------------------------------------------------
     -- Certificate witnesses (register stake key/join/quit stake pool)
@@ -317,7 +315,7 @@ mkSignedShelleyTransaction networkId keyStore tx = SignTransactionResult
             Nothing
 
     certWits = case txWitnessTagFor @k of
-        TxWitnessShelleyUTxO -> mapMaybe mkStakeWit certs
+        TxWitnessShelleyUTxO -> map mkStakeWit certs
         TxWitnessByronUTxO{} -> []
 
 newTransactionLayer

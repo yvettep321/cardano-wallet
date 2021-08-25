@@ -1828,9 +1828,9 @@ signTransaction
     -> ApiSignTransactionPostData
     -> Handler ApiSignedTransaction
 signTransaction _ ctx (ApiT wid) body = do
-    -- TODO: It is currently up to the user to add withdrawal information to the
-    -- request. In future we should determine the credentials required from
-    -- transaction and validate.
+    -- TODO: It is currently up to the user to specify withdrawal information in
+    -- the request. In future, we should only require withdrawal information in
+    -- the case of withdrawing from an external wallet.
     (_, mkRwdAcct) <- mkRewardAccountBuilder @_ @s @_ ctx wid wdrlReq
 
     withWorkerCtx ctx wid liftE liftE $ \wrk -> liftHandler $

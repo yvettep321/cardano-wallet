@@ -1574,7 +1574,7 @@ withKeyStore
     -> ((k 'RootK XPrv, Passphrase "encryption") -> Maybe (XPrv, Passphrase "encryption"))
        -- ^ Reward account derived from the root key (or somewhere else).
     -> Passphrase "raw"
-    -> (SignTransactionKeyStore (k 'AddressK XPrv) -> IO a)
+    -> (SignTransactionKeyStore (k 'AddressK XPrv) XPrv -> IO a)
     -> ExceptT ErrWitnessTx IO a
 withKeyStore ctx wid mkRwdAcct pwd action = do
     (adState, utxo, rewardAcct) <- withExceptT ErrWitnessTxNoSuchWallet $ do
@@ -1586,11 +1586,12 @@ withKeyStore ctx wid mkRwdAcct pwd action = do
 
     withRootKey @_ @s ctx wid pwd ErrWitnessTxWithRootKey $ \xprv scheme -> do
         let pwdP = preparePassphrase scheme pwd
-        let stakeCreds acct = if Just acct == rewardAcct
+        let stakeCreds acct = uncurry DecryptedSigningKey <$>
+                if Just acct == rewardAcct
                 -- using stake credentials from self
-                then uncurry DecryptedSigningKey <$> mkRwdAcct (xprv, pwdP)
+                then mkRwdAcct (xprv, pwdP)
                 -- using external stake credentials
-                else uncurry DecryptedSigningKey <$> mkRwdAcct (xprv, mempty)
+                else mkRwdAcct (error "xprv", mempty)
         let keyFrom = fmap (uncurry DecryptedSigningKey) . isOwned adState (xprv, pwdP)
         liftIO $ action $ SignTransactionKeyStore{stakeCreds,resolver,keyFrom}
 
