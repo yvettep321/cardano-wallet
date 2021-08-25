@@ -74,7 +74,7 @@ module Cardano.Wallet.Api.Link
     , mintBurnAssets
 
       -- * Transactions
-    , createTransaction
+    , createTransactionOld
     , listTransactions
     , listTransactions'
     , getTransactionFee
@@ -536,7 +536,7 @@ getByronAsset w pid n
 -- Transactions
 --
 
-createTransaction
+createTransactionOld
     :: forall style w.
         ( HasCallStack
         , HasType (ApiT WalletId) w
@@ -544,7 +544,7 @@ createTransaction
         )
     => w
     -> (Method, Text)
-createTransaction w = discriminate @style
+createTransactionOld w = discriminate @style
     (endpoint @(Api.CreateTransactionOld Net) (wid &))
     (endpoint @(Api.CreateByronTransactionOld Net) (wid &))
     (notSupported "Shared")
