@@ -1224,12 +1224,7 @@ toCardanoTxBody era (TxPayload md certs) ttl wdrl cs fee =
     , txExtraKeyWits = Cardano.TxExtraKeyWitnessesNone
 
     , Cardano.txCertificates =
-        let
-            -- It seems that passing Map.empty here works just fine.
-            witMap = Map.empty
-            ctx = Cardano.BuildTxWith witMap
-        in
-            Cardano.TxCertificates certSupported certs ctx
+        Cardano.TxCertificates certSupported certs (Cardano.BuildTxWith mempty)
 
     , Cardano.txFee = explicitFees (toCardanoLovelace fee)
 
