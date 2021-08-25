@@ -231,7 +231,7 @@ spec = describe "SHELLEY_HW_WALLETS" $ do
                 }|]
 
             rFee <- request @ApiFee ctx
-                (Link.getTransactionFee @'Shelley wSrc) Default payload
+                (Link.getTransactionFeeOld @'Shelley wSrc) Default payload
             expectResponseCode HTTP.status202 rFee
 
         it "Can delete" $ \ctx -> runResourceT $ do

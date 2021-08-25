@@ -252,7 +252,7 @@ spec = describe "BYRON_HW_WALLETS" $ do
                 }|]
 
             rFee <- request @ApiFee ctx
-                (Link.getTransactionFee @'Byron wSrc) Default payload
+                (Link.getTransactionFeeOld @'Byron wSrc) Default payload
             expectResponseCode HTTP.status202 rFee
 
         it "Can delete" $ \ctx -> runResourceT $ do

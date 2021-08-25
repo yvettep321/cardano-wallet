@@ -324,7 +324,7 @@ spec = describe "BYRON_TRANSACTIONS" $ do
             }|]
 
         rFeeEst <- request @ApiFee ctx
-            (Link.getTransactionFee @'Byron wByron) Default payload
+            (Link.getTransactionFeeOld @'Byron wByron) Default payload
         verify rFeeEst
             [ expectSuccess
             , expectResponseCode HTTP.status202

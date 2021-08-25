@@ -326,7 +326,7 @@ walletApiBench capture ctx = do
                 }]
             }|]
         t6 <- measureApiLogs capture $ request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wal1) Default payload
+            (Link.getTransactionFeeOld @'Shelley wal1) Default payload
         fmtResult "postTransactionFee " t6
 
         let payloadTx = Json [json|{

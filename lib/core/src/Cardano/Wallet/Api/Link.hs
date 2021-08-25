@@ -77,7 +77,7 @@ module Cardano.Wallet.Api.Link
     , createTransactionOld
     , listTransactions
     , listTransactions'
-    , getTransactionFee
+    , getTransactionFeeOld
     , deleteTransaction
     , getTransaction
     , createUnsignedTransaction
@@ -582,7 +582,7 @@ listTransactions' w minWithdrawal inf sup order = discriminate @style
   where
     wid = w ^. typed @(ApiT WalletId)
 
-getTransactionFee
+getTransactionFeeOld
     :: forall style w.
         ( HasCallStack
         , HasType (ApiT WalletId) w
@@ -590,7 +590,7 @@ getTransactionFee
         )
     => w
     -> (Method, Text)
-getTransactionFee w = discriminate @style
+getTransactionFeeOld w = discriminate @style
     (endpoint @(Api.PostTransactionFeeOld Net) (wid &))
     (endpoint @(Api.PostByronTransactionFeeOld Net) (wid &))
     (notSupported "Shared")

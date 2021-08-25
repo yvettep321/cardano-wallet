@@ -243,7 +243,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
             mkTxPayload ctx wSrc (minUTxOValue (_mainEra ctx)) fixturePassphrase
 
         (_, ApiFee (Quantity feeMin) (Quantity feeMax) _ _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wSrc) payload
+            (Link.getTransactionFeeOld @'Shelley wSrc) payload
 
         r <- request @(ApiTransaction n) ctx
             (Link.createTransactionOld @'Shelley wSrc) Default payload
@@ -313,7 +313,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         payload <- liftIO $ mkTxPayload ctx wb amt fixturePassphrase
 
         (_, ApiFee (Quantity feeMin) (Quantity feeMax) minCoins _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wa) payload
+            (Link.getTransactionFeeOld @'Shelley wa) payload
         rTx <- request @(ApiTransaction n) ctx
             (Link.createTransactionOld @'Shelley wa) Default payload
         ra <- request @ApiWallet ctx
@@ -412,7 +412,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
             }|]
 
         (_, ApiFee (Quantity feeMin) (Quantity feeMax) _ _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wSrc) payload
+            (Link.getTransactionFeeOld @'Shelley wSrc) payload
 
         r <- request @(ApiTransaction n) ctx
             (Link.createTransactionOld @'Shelley wSrc) Default payload
@@ -463,7 +463,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         payload <- liftIO $ mkTxPayload ctx wDest amt fixturePassphrase
 
         (_, ApiFee (Quantity feeMin) _ _ _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wDest) payload
+            (Link.getTransactionFeeOld @'Shelley wDest) payload
 
         -- NOTE It's a little tricky to estimate the fee needed for a
         -- transaction with no change output, because in order to know the right
@@ -516,7 +516,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
 
         payload <- liftIO $ mkTxPayload ctx wDest minUTxOValue' fixturePassphrase
         (_, ApiFee (Quantity feeMin) _ _ _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wDest) payload
+            (Link.getTransactionFeeOld @'Shelley wDest) payload
 
         wSrc <- fixtureWalletWith @n ctx [minUTxOValue' + (feeMin `div` 2)]
 
@@ -638,7 +638,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         -- use minimum coin value provided by the server
         payloadFee <- mkTxPayloadMA @n destination 0 [val] fixturePassphrase
         rFee <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wSrc) Default payloadFee
+            (Link.getTransactionFeeOld @'Shelley wSrc) Default payloadFee
         let [Quantity minCoin] = getFromResponse #minimumCoins rFee
 
         payload <- mkTxPayloadMA @n destination minCoin [val] fixturePassphrase
@@ -1123,7 +1123,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         let payloadWithMetadata = addTxMetadata txMeta payload
 
         ra <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wa) Default payloadWithMetadata
+            (Link.getTransactionFeeOld @'Shelley wa) Default payloadWithMetadata
         verify ra
             [ expectSuccess
             , expectResponseCode HTTP.status202
@@ -1134,7 +1134,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         -- check that it's estimated to have less fees for transactions without
         -- metadata.
         rb <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wa) Default payload
+            (Link.getTransactionFeeOld @'Shelley wa) Default payload
         verify rb
             [ expectResponseCode HTTP.status202
             , expectField (#estimatedMin . #getQuantity) (.< feeEstMin)
@@ -1151,7 +1151,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         let payload = addTxMetadata txMeta basePayload
 
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wa) Default payload
+            (Link.getTransactionFeeOld @'Shelley wa) Default payload
 
         expectResponseCode HTTP.status400 r
         expectErrorMessage errMsg400TxMetadataStringTooLong r
@@ -1170,7 +1170,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
             bytes = [json|{ "bytes": #{T.replicate 64 "a"} }|]
         let payload = addTxMetadata txMeta basePayload
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wa) Default payload
+            (Link.getTransactionFeeOld @'Shelley wa) Default payload
 
         verify r
             [ expectResponseCode HTTP.status403
@@ -1196,14 +1196,14 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
             w <- emptyWallet ctx
             let payload = nonJson
             r <- request @ApiFee ctx
-                (Link.getTransactionFee @'Shelley w) Default payload
+                (Link.getTransactionFeeOld @'Shelley w) Default payload
             expectResponseCode HTTP.status400 r
 
     it "TRANS_ESTIMATE_03a - we see result when we can't cover fee" $ \ctx -> runResourceT $ do
         wSrc <- fixtureWallet ctx
         payload <- mkTxPayload ctx wSrc faucetAmt fixturePassphrase
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wSrc) Default payload
+            (Link.getTransactionFeeOld @'Shelley wSrc) Default payload
         verify r
             [ expectResponseCode HTTP.status202
             , expectField (#estimatedMin . #getQuantity) (.>= 0)
@@ -1231,7 +1231,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
                 "passphrase": #{fixturePassphrase}
             }|]
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wSrc) Default payload
+            (Link.getTransactionFeeOld @'Shelley wSrc) Default payload
         verify r
             [ expectResponseCode HTTP.status202
             , expectField (#estimatedMin . #getQuantity) (.>= 0)
@@ -1245,7 +1245,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         wDest <- emptyWallet ctx
         payload <- mkTxPayload ctx wDest reqAmt fixturePassphrase
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley wSrc) Default payload
+            (Link.getTransactionFeeOld @'Shelley wSrc) Default payload
         verify r
             [ expectResponseCode HTTP.status403
             , expectErrorMessage errMsg403NotEnoughMoney
@@ -1258,7 +1258,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
         let minUTxOValue' = minUTxOValue (_mainEra ctx)
         payload <- mkTxPayload ctx wDest minUTxOValue' fixturePassphrase
         r <- request @ApiFee ctx
-            (Link.getTransactionFee @'Shelley w) Default payload
+            (Link.getTransactionFeeOld @'Shelley w) Default payload
         expectResponseCode HTTP.status404 r
         expectErrorMessage (errMsg404NoWallet $ w ^. walletId) r
 
@@ -1966,7 +1966,7 @@ spec = describe "SHELLEY_TRANSACTIONS" $ do
                 "passphrase": #{fixturePassphrase}
             }|]
         (_, ApiFee (Quantity _) (Quantity fee) _ _) <- unsafeRequest ctx
-            (Link.getTransactionFee @'Shelley wSelf) payload
+            (Link.getTransactionFeeOld @'Shelley wSelf) payload
 
         rTx <- request @(ApiTransaction n) ctx
             (Link.createTransactionOld @'Shelley wSelf) Default payload
