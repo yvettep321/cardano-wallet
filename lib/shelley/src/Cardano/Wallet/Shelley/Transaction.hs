@@ -78,7 +78,7 @@ import Cardano.Wallet.Primitive.Types
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
 import Cardano.Wallet.Primitive.Types.Coin
-    ( Coin (..), addCoin, subtractCoin, sumCoins )
+    ( Coin (..), addCoin, coinToInteger, sumCoins )
 import Cardano.Wallet.Primitive.Types.TokenBundle
     ( TokenBundle )
 import Cardano.Wallet.Primitive.Types.TokenMap
@@ -136,6 +136,8 @@ import Cardano.Wallet.Transaction
     , withdrawalRewardAccount
     , withdrawalToCoin
     )
+import Cardano.Wallet.Util
+    ( internalError )
 import Data.Bifunctor
     ( Bifunctor (..), bimap )
 import Data.Function
@@ -147,7 +149,7 @@ import Data.Generics.Labels
 import Data.Kind
     ( Type )
 import Data.Maybe
-    ( fromMaybe, mapMaybe )
+    ( mapMaybe )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Set
@@ -155,7 +157,7 @@ import Data.Set
 import Data.Word
     ( Word16, Word64, Word8 )
 import Fmt
-    ( Buildable (..), pretty )
+    ( Buildable (..), indentF, unlinesF, (+|), (|+) )
 import GHC.Stack
     ( HasCallStack )
 
@@ -345,7 +347,7 @@ _mkTransactionBody networkId (e@(AnyCardanoEra era), pp) ctx cs =
                 mkShelleyTransactionBody networkId pp ctx cs era'
 
 mkShelleyTransactionBody
-    :: forall era. Cardano.IsCardanoEra era
+    :: forall era. (HasCallStack, Cardano.IsCardanoEra era)
     => Cardano.NetworkId
     -> ProtocolParameters
     -> TransactionCtx
@@ -357,20 +359,16 @@ mkShelleyTransactionBody networkId pp ctx cs era =
   where
     ttl = txTimeToLive ctx
 
-    (wdrls, certs, deposits) = mkShelleyTransactionDelegation networkId pp ctx
+    (wdrls, certs, deposits) = mkShelleyTransactionDelegation networkId ctx
 
-    feeGap = selectionDelta txOutCoin cs
-    fee = unsafeSubtractCoin cs feeGap deposits
+    deposits' = coinToInteger (stakeKeyDeposit pp) * fromIntegral deposits
+    feeGap = coinToInteger (selectionDelta txOutCoin cs)
 
-    unsafeSubtractCoin
-        :: (HasCallStack, Buildable x) => x -> Coin -> Coin -> Coin
-    unsafeSubtractCoin x a b = fromMaybe (error err) (a `subtractCoin` b)
-      where
-        err = unlines
-            [ "unsafeSubtractCoin: got a negative value. Tried to subtract "
-            <> show b <> " from " <> show a <> "."
-            , "In the context of: "
-            , pretty x
+    fee | feeGap >= deposits' = Coin (fromIntegral (feeGap - deposits'))
+        | otherwise = internalError $ unlinesF
+            [ "Deposits amount "+|deposits'|+" too large for gap "+|feeGap|+"!"
+            , "In the context of:"
+            , indentF 2 (build cs)
             ]
 
 -- | Auxilliary function for 'mkShelleyTransaction' which constructs the
@@ -378,22 +376,22 @@ mkShelleyTransactionBody networkId pp ctx cs era =
 -- delegation.
 mkShelleyTransactionDelegation
     :: NetworkId
-    -> ProtocolParameters
     -> TransactionCtx
-    -> ([(Cardano.StakeAddress, Cardano.Lovelace)], [Cardano.Certificate], Coin)
-mkShelleyTransactionDelegation networkId pp (TransactionCtx wdrl delegs _ _) =
+    -> ([(Cardano.StakeAddress, Cardano.Lovelace)], [Cardano.Certificate], Int)
+    -- ^ Withrawals, certificates, and num deposits taken/returned
+mkShelleyTransactionDelegation networkId (TransactionCtx wdrl delegs _ _) =
     ( mapRewardAcct (mkWithdrawals networkId (withdrawalToCoin wdrl))
     , mapRewardAcct (\acct -> map (mkDelegationCertificate acct) delegs)
-    , sumCoins (map getDeposit delegs) )
+    , sum (map getDeposit delegs) )
   where
     mapRewardAcct :: (RewardAccount -> [a]) -> [a]
     mapRewardAcct f = maybe [] f (withdrawalRewardAccount wdrl)
 
-    getDeposit :: DelegationAction -> Coin
+    getDeposit :: DelegationAction -> Int
     getDeposit = \case
-        RegisterKey -> Coin 0
-        Join _ -> stakeKeyDeposit pp
-        Quit -> Coin 0
+        RegisterKey -> 0
+        Join _ -> 1
+        Quit -> 0
 
     mkDelegationCertificate
         :: RewardAccount
