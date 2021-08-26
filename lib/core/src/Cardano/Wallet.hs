@@ -183,6 +183,7 @@ module Cardano.Wallet
     -- * Utilities
     , throttle
     , guardHardIndex
+    , nullFluff
 
     -- * Logging
     , WalletWorkerLog (..)
@@ -2941,3 +2942,7 @@ instance HasSeverityAnnotation TxSubmitLog where
         MsgRetryPostTxResult _ (Right _) -> Info
         MsgRetryPostTxResult _ (Left _) -> Debug
         MsgProcessPendingPool msg -> getSeverityAnnotation msg
+
+-- | Empty fluff.
+nullFluff :: Monoid a => a
+nullFluff = mempty
