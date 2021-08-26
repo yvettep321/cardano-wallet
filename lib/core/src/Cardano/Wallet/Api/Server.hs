@@ -1578,25 +1578,22 @@ selectCoinsForJoin ctx knownPools getPoolStatus pid wid = do
     curEpoch <- getCurrentEpoch ctx
 
     withWorkerCtx ctx wid liftE liftE $ \wrk -> do
-        delegs <- liftHandler
-            $ W.joinStakePool @_ @s @k wrk curEpoch pools pid poolStatus wid
-        let deposits = mapMaybe fst delegs
+        delegs <- liftHandler $
+            W.joinStakePool @_ @s @k wrk curEpoch pools pid poolStatus wid
         let txCtx = defaultTransactionCtx
-                { txDelegationActions = snd <$> delegs
-                }
+                { txDelegationActions = NE.toList delegs }
 
         let transform = \s sel ->
                 W.assignChangeAddresses (delegationAddress @n) sel s
                 & uncurry (W.selectionToUnsignedTx (txWithdrawal txCtx))
         wal <- liftHandler $ W.readWalletUTxOIndex @_ @s @k wrk wid
-        utx <- liftHandler
-            $ W.selectAssetsNoOutputs @_ @s @k wrk wid wal txCtx transform
+        utx <- liftHandler $
+            W.selectAssetsNoOutputs @_ @s @k wrk wid wal txCtx transform
 
-        actionPaths <- liftHandler $ forM delegs $ \(_, action) ->
-            rewardActionPath @_ @s @k wrk wid action
-        let actionPath = Just (NE.fromList actionPaths)
-
-        pure $ mkApiCoinSelection deposits actionPath Nothing utx
+        deposits <- liftIO $ W.delegationActionDeposits wrk delegs
+        actionPaths <- liftHandler $
+            mapM (rewardActionPath @_ @s @k wrk wid) delegs
+        pure $ mkApiCoinSelection deposits (Just actionPaths) Nothing utx
 
 rewardActionPath
     :: forall ctx s k.
@@ -2068,7 +2065,7 @@ constructTransaction ctx config (ApiT wid) body = do
             { txWithdrawal = wdrl
             , txMetadata = md
             , txTimeToLive = ttl
-            , txDelegationActions = snd <$> delegs
+            , txDelegationActions = delegs
             }
 
     let transform = \s sel ->
@@ -2124,7 +2121,7 @@ getDelegationActions
     -> ConstructTransactionConfig s IO
     -> WalletId
     -> NonEmpty ApiMultiDelegationAction
-    -> Handler (NonEmpty (Maybe Coin, DelegationAction))
+    -> Handler (NonEmpty DelegationAction)
 getDelegationActions ctx config wid delegs = do
     -- fixme: getting the current epoch should never fail
     curEpoch <- liftHandler $ currentEpoch ti
@@ -2179,7 +2176,7 @@ joinStakePool ctx knownPools getPoolStatus apiPoolId (ApiT wid) body = do
         let txCtx = defaultTransactionCtx
                 { txWithdrawal = wdrl
                 , txTimeToLive = ttl
-                , txDelegationActions = snd <$> delegs
+                , txDelegationActions = NE.toList delegs
                 }
         wal <- liftHandler $ W.readWalletUTxOIndex @_ @s @k wrk wid
         sel <- liftHandler

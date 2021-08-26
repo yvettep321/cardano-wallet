@@ -137,6 +137,7 @@ module Cardano.Wallet
     , joinStakePool
     , quitStakePool
     , stakePoolDelegation
+    , delegationActionDeposits
     , guardJoin
     , guardQuit
     , ErrStakePoolDelegation (..)
@@ -392,12 +393,13 @@ import Cardano.Wallet.Transaction
     , TransactionLayer (..)
     , Withdrawal (..)
     , defaultTransactionCtx
+    , delegationActionDeposit
     , withdrawalToCoin
     )
 import Control.DeepSeq
     ( NFData )
 import Control.Monad
-    ( replicateM, unless, when )
+    ( join, replicateM, unless, when )
 import Control.Monad.Class.MonadTime
     ( DiffTime
     , MonadMonotonicTime (..)
@@ -2074,7 +2076,6 @@ migrationPlanToSelectionWithdrawals plan rewardWithdrawal outputAddressesToCycle
 joinStakePool
     :: forall ctx s k.
         ( HasDBLayer IO s k ctx
-        , HasNetworkLayer IO ctx
         , HasLogger WalletWorkerLog ctx
         )
     => ctx
@@ -2083,8 +2084,7 @@ joinStakePool
     -> PoolId
     -> PoolLifeCycleStatus
     -> WalletId
-    -> ExceptT ErrStakePoolDelegation IO [(Maybe Coin, DelegationAction)]
-    -- ^ fst is the deposit
+    -> ExceptT ErrStakePoolDelegation IO (NonEmpty DelegationAction)
 joinStakePool ctx currentEpoch knownPools pid poolStatus wid =
     db & \DBLayer{..} -> do
         (walMeta, isKeyReg) <- mapExceptT atomically $ do
@@ -2105,13 +2105,10 @@ joinStakePool ctx currentEpoch knownPools pid poolStatus wid =
 
         liftIO $ traceWith tr $ MsgIsStakeKeyRegistered isKeyReg
 
-        dep <- liftIO $ stakeKeyDeposit <$> currentProtocolParameters nl
-
-        pure $ [(Just dep, RegisterKey) | not isKeyReg] ++ [(Nothing, Join pid)]
+        pure $ NE.reverse $ Join pid :| [RegisterKey | not isKeyReg]
   where
     db = ctx ^. dbLayer @IO @s @k
     tr = contramap MsgWallet $ ctx ^. logger
-    nl = ctx ^. networkLayer
 
 -- | Helper function to factor necessary logic for quitting a stake pool.
 quitStakePool
@@ -2149,13 +2146,24 @@ stakePoolDelegation
     -> Set PoolId
     -> WalletId
     -> NonEmpty (PoolLifeCycleStatus, DelegationAction)
-    -> ExceptT ErrStakePoolDelegation IO (NonEmpty (Maybe Coin, DelegationAction))
+    -> ExceptT ErrStakePoolDelegation IO (NonEmpty DelegationAction)
     -- ^ fst is the deposit
 stakePoolDelegation ctx curEpoch pools wid delegs =
-    fmap (NE.fromList . concat) . forM delegs $ uncurry $ \status -> \case
-        RegisterKey -> pure [(Nothing, RegisterKey)]
+    fmap join . forM delegs $ uncurry $ \status -> \case
+        RegisterKey -> pure $ pure RegisterKey
         Join pid -> joinStakePool @_ @s @k ctx curEpoch pools pid status wid
-        Quit -> pure . (Nothing,) <$> quitStakePool @_ @s @k ctx wid
+        Quit -> pure <$> quitStakePool @_ @s @k ctx wid
+
+delegationActionDeposits
+    :: forall ctx. HasNetworkLayer IO ctx
+    => ctx
+    -> NonEmpty DelegationAction
+    -> IO [Coin]
+delegationActionDeposits ctx actions = do
+    let nl = ctx ^. networkLayer
+    Coin depositAmount <- stakeKeyDeposit <$> currentProtocolParameters nl
+    let makeCoin = Coin . (* depositAmount) . max 0 . negate
+    pure $ map (delegationActionDeposit makeCoin) (NE.toList actions)
 
 {-------------------------------------------------------------------------------
                                  Fee Estimation
