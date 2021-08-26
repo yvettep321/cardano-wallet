@@ -131,6 +131,7 @@ import Cardano.Wallet.Transaction
     , SignTransactionResult (..)
     , TransactionCtx (..)
     , TransactionLayer (..)
+    , delegationActionDeposit
     , keyStoreLookup
     , keyStoreLookupStake
     , withdrawalRewardAccount
@@ -382,16 +383,10 @@ mkShelleyTransactionDelegation
 mkShelleyTransactionDelegation networkId (TransactionCtx wdrl delegs _ _) =
     ( mapRewardAcct (mkWithdrawals networkId (withdrawalToCoin wdrl))
     , mapRewardAcct (\acct -> map (mkDelegationCertificate acct) delegs)
-    , sum (map getDeposit delegs) )
+    , sum (map (delegationActionDeposit negate) delegs) )
   where
     mapRewardAcct :: (RewardAccount -> [a]) -> [a]
     mapRewardAcct f = maybe [] f (withdrawalRewardAccount wdrl)
-
-    getDeposit :: DelegationAction -> Int
-    getDeposit = \case
-        RegisterKey -> 0
-        Join _ -> 1
-        Quit -> 0
 
     mkDelegationCertificate
         :: RewardAccount
@@ -531,11 +526,7 @@ _initSelectionCriteria pp ctx utxoAvailable outputsUnprepared
 
     extraCoinSource = Just $ addCoin
         (withdrawalToCoin $ view #txWithdrawal ctx)
-        (sumCoins (map returnedDeposit (view #txDelegationActions ctx)))
-    returnedDeposit = \case
-        RegisterKey -> Coin 0
-        Join _ -> Coin 0
-        Quit -> stakeKeyDeposit pp
+        (returnedDeposits pp $ view #txDelegationActions ctx)
 
     outputsToCover =
         prepareOutputsWith (_calcMinimumCoinValue pp) outputsUnprepared
@@ -543,6 +534,16 @@ _initSelectionCriteria pp ctx utxoAvailable outputsUnprepared
     -- Until we properly support minting and burning, set to empty.
     assetsToMint = TokenMap.empty
     assetsToBurn = TokenMap.empty
+
+-- | Get the sum of deposits returned from the given delegation actions.
+--
+-- This will always be non-negative. Deposits taken are not included in the
+-- total.
+returnedDeposits :: ProtocolParameters -> [DelegationAction] -> Coin
+returnedDeposits pp = sumCoins . map (delegationActionDeposit makeCoin)
+  where
+    Coin deposit = stakeKeyDeposit pp
+    makeCoin = Coin . (* deposit) . fromIntegral . max (0 :: Int)
 
 dummySkeleton :: Int -> [TxOut] -> SelectionSkeleton
 dummySkeleton inputCount outputs = SelectionSkeleton

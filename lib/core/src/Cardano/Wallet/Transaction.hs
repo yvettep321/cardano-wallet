@@ -26,6 +26,7 @@ module Cardano.Wallet.Transaction
       TransactionLayer (..)
     , mkTransaction
     , DelegationAction (..)
+    , delegationActionDeposit
     , TransactionCtx (..)
     , defaultTransactionCtx
     , Withdrawal (..)
@@ -254,6 +255,17 @@ defaultTransactionCtx = TransactionCtx
 -- | Whether the user is attempting any particular delegation action.
 data DelegationAction = RegisterKey | Join PoolId | Quit
     deriving (Show, Eq, Generic)
+
+-- | Get the number of deposits required for the given delegation action. This
+-- should be multiplied by the actual deposit amount for use in a transaction.
+--
+-- A positive number means deposit returned and a negative number means deposit
+-- taken.
+delegationActionDeposit :: Integral n => (n -> a) -> DelegationAction -> a
+delegationActionDeposit f = \case
+    RegisterKey -> f 0
+    Join _ -> f (-1)
+    Quit -> f 1
 
 -- | A transaction with information about the witnesses (if any) which were
 -- added by 'signTransaction`.
