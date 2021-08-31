@@ -59,8 +59,10 @@ mkShell rec {
   nobuildPhase = "echo '${lib.concatStringsSep "\n" buildInputs}' > $out";
   preferLocalBuild = true;
 
+  # fixme: this is causing an error:
+  #   bash: /nix/store/wx1vk75bpdr65g6xwxbj4rw0pk04v5j3-glibc-2.27/lib/libc.so.6: version `GLIBC_2.33' not found (required by /nix/store/yn7nd41grg2mzvzliphalk70hs0rfpdr-ncurses-6.2/lib/libncursesw.so.6)
   # Ensure that libz.so and other libraries are available to TH splices.
-  LD_LIBRARY_PATH = lib.makeLibraryPath libs;
+  # LD_LIBRARY_PATH = lib.makeLibraryPath libs;
 
   # Force a UTF-8 locale because many Haskell programs and tests assume this.
   LANG = "en_US.UTF-8";
