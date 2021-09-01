@@ -381,6 +381,8 @@ newTransactionLayer networkId = TransactionLayer
         estimateTxCost pp $
         mkTxSkeleton (txWitnessTagFor @k) ctx skeleton
 
+    , calcScriptExecutionCost = \_pp _sealedTx -> undefined
+
     , computeSelectionLimit = \pp ctx outputsToCover ->
         let txMaxSize = getTxMaxSize $ txParameters pp in
         MaximumInputLimit $
