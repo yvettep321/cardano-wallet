@@ -437,13 +437,13 @@ fromCardanoBlock gp = \case
     BlockByron blk ->
         fromByronBlock gp blk
     BlockShelley blk ->
-        fst $ fromShelleyBlock gp blk
+        fromShelleyBlock gp blk
     BlockAllegra blk ->
-        fst $ fromAllegraBlock gp blk
+        fromAllegraBlock gp blk
     BlockMary blk ->
-        fst $ fromMaryBlock gp blk
+        fromMaryBlock gp blk
     BlockAlonzo blk ->
-        fst $ fromAlonzoBlock gp blk
+        fromAlonzoBlock gp blk
 
 toCardanoEra :: CardanoBlock c -> AnyCardanoEra
 toCardanoEra = \case
@@ -456,50 +456,38 @@ toCardanoEra = \case
 fromShelleyBlock
     :: W.GenesisParameters
     -> ShelleyBlock (SL.ShelleyEra StandardCrypto)
-    -> (W.Block, [W.PoolCertificate])
-fromShelleyBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
-    let
-       txs = map fromShelleyTx $ toList txs'
-    in
-        ( W.Block
-            { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
-            , transactions = txs
-            , delegations  = mconcat (map W.delegationCerts txs)
-            }
-        , mconcat (map W.poolCerts txs)
-        )
+    -> W.Block
+fromShelleyBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs)) _) = W.Block
+    { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
+    , transactions
+    , delegations = mconcat (map W.delegationCerts transactions)
+    }
+  where
+    transactions = map fromShelleyTx $ toList txs
 
 fromAllegraBlock
     :: W.GenesisParameters
     -> ShelleyBlock (MA.ShelleyMAEra 'MA.Allegra StandardCrypto)
-    -> (W.Block, [W.PoolCertificate])
-fromAllegraBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
-    let
-       txs = map fromAllegraTx $ toList txs'
-    in
-        ( W.Block
-            { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
-            , transactions = txs
-            , delegations  = mconcat (map W.delegationCerts txs)
-            }
-        , mconcat (map W.poolCerts txs)
-        )
+    -> W.Block
+fromAllegraBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs)) _) = W.Block
+    { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
+    , transactions
+    , delegations = mconcat (map W.delegationCerts transactions)
+    }
+  where
+    transactions = map fromAllegraTx $ toList txs
 
 fromMaryBlock
     :: W.GenesisParameters
     -> ShelleyBlock (MA.ShelleyMAEra 'MA.Mary StandardCrypto)
-    -> (W.Block, [W.PoolCertificate])
-fromMaryBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
-    let
-       txs = map fromMaryTx $ toList txs'
-    in
-        ( W.Block
-            { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
-            , transactions = txs
-            , delegations  = mconcat (map W.delegationCerts txs)
-            }
-        , mconcat (map W.poolCerts txs)
-        )
+    -> W.Block
+fromMaryBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs)) _) = W.Block
+    { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
+    , transactions
+    , delegations = mconcat (map W.delegationCerts transactions)
+    }
+  where
+    transactions = map fromMaryTx $ toList txs
 
 -- TODO: We could use the cardano-api `Block` pattern to very elegently get the
 -- header and txs of any era block.
@@ -511,17 +499,15 @@ fromMaryBlock gp blk@(ShelleyBlock (SL.Block _ (SL.TxSeq txs')) _) =
 fromAlonzoBlock
     :: W.GenesisParameters
     -> ShelleyBlock (Alonzo.AlonzoEra StandardCrypto)
-    -> (W.Block, [W.PoolCertificate])
-fromAlonzoBlock gp blk@(ShelleyBlock (SL.Block _ txSeq) _) =
-    ( W.Block
-        { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
-        , transactions
-        , delegations = mconcat (map W.delegationCerts transactions)
-        }
-    , mconcat (map W.poolCerts transactions) )
+    -> W.Block
+fromAlonzoBlock gp blk@(ShelleyBlock (SL.Block _ txSeq) _) = W.Block
+    { header = toShelleyBlockHeader (W.getGenesisBlockHash gp) blk
+    , transactions
+    , delegations = mconcat (map W.delegationCerts transactions)
+    }
   where
-      Alonzo.TxSeq txs' = txSeq
-      transactions = map fromAlonzoValidatedTx $ toList txs'
+    Alonzo.TxSeq txs' = txSeq
+    transactions = map fromAlonzoValidatedTx $ toList txs'
 
 fromShelleyHash :: ShelleyHash c -> W.Hash "BlockHeader"
 fromShelleyHash (ShelleyHash (SL.HashHeader h)) = W.Hash (hashToBytes h)
