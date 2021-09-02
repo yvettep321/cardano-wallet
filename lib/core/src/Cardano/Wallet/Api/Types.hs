@@ -274,6 +274,7 @@ import Cardano.Wallet.Primitive.Types
     , DecentralizationLevel (..)
     , EpochLength (..)
     , EpochNo (..)
+    , ExecutionUnitPrices (..)
     , GenesisParameters (..)
     , MinimumUTxOValue (..)
     , NetworkParameters (..)
@@ -1011,6 +1012,7 @@ data ApiNetworkParameters = ApiNetworkParameters
     , maximumTokenBundleSize :: !(Quantity "byte" Natural)
     , eras :: !ApiEraInfo
     , maximumCollateralInputCount :: !Word16
+    , executionUnitPrices :: !(Maybe ExecutionUnitPrices)
     } deriving (Eq, Generic, Show)
 
 data ApiEraInfo = ApiEraInfo
@@ -1061,6 +1063,7 @@ toApiNetworkParameters (NetworkParameters gp sp pp) txConstraints toEpochInfo = 
         , maximumTokenBundleSize = Quantity $ pp ^.
             (#txParameters . #getTokenBundleMaxSize . #unTokenBundleMaxSize .
             #unTxSize)
+        , executionUnitPrices = view #executionUnitPrices pp
         }
   where
     toApiCoin = Quantity . fromIntegral . unCoin
