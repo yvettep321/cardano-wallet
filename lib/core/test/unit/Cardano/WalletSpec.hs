@@ -27,7 +27,8 @@ import Cardano.Api
 import Cardano.Mnemonic
     ( SomeMnemonic (..) )
 import Cardano.Wallet
-    ( ErrSignPayment (..)
+    ( ErrSelectAssets (..)
+    , ErrSignPayment (..)
     , ErrSubmitTx (..)
     , ErrUpdatePassphrase (..)
     , ErrWithRootKey (..)
@@ -81,9 +82,12 @@ import Cardano.Wallet.Primitive.AddressDiscovery
     , KnownAddresses (..)
     )
 import Cardano.Wallet.Primitive.CoinSelection
-    ( SelectionError (..) )
+    ( ErrWalletSelection (..) )
 import Cardano.Wallet.Primitive.CoinSelection.Balance
-    ( SelectionResult (..) )
+    ( BalanceInsufficientError (..)
+    , SelectionError (..)
+    , SelectionResult (..)
+    )
 import Cardano.Wallet.Primitive.Migration.SelectionSpec
     ( MockTxConstraints (..)
     , genTokenBundleMixed
@@ -285,7 +289,6 @@ import qualified Cardano.Crypto.Wallet as CC
 import qualified Cardano.Wallet as W
 import qualified Cardano.Wallet.DB.MVar as MVar
 import qualified Cardano.Wallet.DB.Sqlite as Sqlite
-import qualified Cardano.Wallet.Primitive.CoinSelection.Balance as Balance
 import qualified Cardano.Wallet.Primitive.Migration as Migration
 import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TokenBundle
 import qualified Cardano.Wallet.Primitive.Types.UTxOIndex as UTxOIndex
@@ -718,12 +721,12 @@ prop_estimateFee (NonEmpty coins) =
                     `closeTo` (1/10 :: Double)
                 ]
   where
-    genericError :: W.ErrSelectAssets
+    genericError :: ErrSelectAssets
     genericError
-        = W.ErrSelectAssetsSelectionError
-        $ SelectionBalanceError
-        $ Balance.BalanceInsufficient
-        $ Balance.BalanceInsufficientError TokenBundle.empty TokenBundle.empty
+        = ErrSelectAssets
+        $ ErrWalletSelectionBalance
+        $ BalanceInsufficient
+        $ BalanceInsufficientError TokenBundle.empty TokenBundle.empty
 
     runSelection
         :: ExceptT W.ErrSelectAssets (State Int) Coin
@@ -1320,17 +1323,16 @@ dummyTransactionLayer = TransactionLayer
     , constraints =
         error "dummyTransactionLayer: constraints not implemented"
     , decodeTx = \_sealed ->
-        Tx (Hash "") Nothing mempty mempty mempty mempty Nothing
+        Tx (Hash "") Nothing mempty mempty mempty mempty mempty mempty Nothing
     }
 
-
 makeSealedTx :: Tx -> [(XPrv, Passphrase "encryption")] -> SealedTx
-makeSealedTx tx wits =
-        let (Right unsigned) = constructTxBody tx (SlotNo 1000)
-            signed = Cardano.makeSignedTransaction (mkWits unsigned <$> wits) unsigned
-            toSealedTx = sealedTxFromCardano . Cardano.InAnyCardanoEra Cardano.cardanoEra
-        in toSealedTx signed
- where
+makeSealedTx tx wits = toSealedTx signed
+  where
+    Right unsigned = constructTxBody tx (SlotNo 1000)
+    signed = Cardano.makeSignedTransaction (mkWits unsigned <$> wits) unsigned
+    toSealedTx = sealedTxFromCardano . Cardano.InAnyCardanoEra Cardano.cardanoEra
+
     mkWits body key =
         Cardano.makeShelleyKeyWitness body (unencrypt key)
       where
@@ -1388,7 +1390,7 @@ makeSealedTx tx wits =
           safeCast :: Word64 -> Integer
           safeCast = fromIntegral
 
-    constructTxBody (Tx _ _ _ inpsSelected outsCovered _ _) ttl =
+    constructTxBody (Tx _ _ _ inpsSelected outsCovered _ _ _ _) ttl =
         Cardano.makeTransactionBody $ Cardano.TxBodyContent
         { Cardano.txIns = constructTxIn <$> F.toList inpsSelected
         , Cardano.txOuts = toMaryTxOut <$> outsCovered
