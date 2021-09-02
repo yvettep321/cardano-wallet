@@ -756,7 +756,7 @@ fromGenesisData g initialFunds =
                 ]
             , withdrawals = mempty
             , metadata = Nothing
-            , isValidScript = Nothing
+            , isValidScript = W.ScriptsNotSupported
             }
           where
             W.TxIn pseudoHash _ = fromShelleyTxIn $
@@ -867,7 +867,7 @@ fromShelleyTx tx =
         , metadata =
             fromShelleyMD <$> SL.strictMaybeToMaybe mmd
         , isValidScript =
-            Nothing
+            W.ScriptsNotSupported
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -899,7 +899,7 @@ fromAllegraTx tx =
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mmd
         , isValidScript =
-            Nothing
+            W.ScriptsNotSupported
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -935,7 +935,7 @@ fromMaryTx tx =
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mad
         , isValidScript =
-            Nothing
+            W.ScriptsNotSupported
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -981,7 +981,7 @@ fromAlonzoTxBodyAndAux bod mad =
         , metadata =
             fromShelleyMD . toSLMetadata <$> SL.strictMaybeToMaybe mad
         , isValidScript =
-            Nothing
+            W.ScriptsNotSupported
         }
     , mapMaybe fromShelleyDelegationCert (toList certs)
     , mapMaybe fromShelleyRegistrationCert (toList certs)
@@ -1028,7 +1028,10 @@ fromAlonzoTx
        , [W.PoolCertificate]
        )
 fromAlonzoTx (Alonzo.ValidatedTx bod _wits (Alonzo.IsValid isValid) aux) =
-    (\(tx, d, p) -> (tx { W.isValidScript = Just isValid }, d, p))
+    (\(tx, d, p) -> (tx { W.isValidScript = if isValid
+                                            then W.ScriptValidationPassed
+                                            else W.ScriptValidationFailed
+                        }, d, p))
     $ fromAlonzoTxBodyAndAux bod aux
 
 fromCardanoValue :: HasCallStack => Cardano.Value -> TokenBundle.TokenBundle
