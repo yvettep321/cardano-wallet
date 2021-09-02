@@ -198,18 +198,7 @@ import Ouroboros.Consensus.Node.NetworkProtocolVersion
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..), getCompactGenesis )
 import Ouroboros.Network.Block
-<<<<<<< HEAD
-    ( Point
-    , Tip (..)
-    , blockPoint
-    , genesisPoint
-    , getPoint
-    , pointHash
-    , pointSlot
-    )
-=======
-    ( Point, SlotNo (..), Tip (..), blockPoint, getPoint )
->>>>>>> efc0229c5... wip: Refactor all chain-sync stuff
+    ( Point, Tip (..), blockPoint, getPoint )
 import Ouroboros.Network.Client.Wallet
     ( LSQ (..)
     , LocalStateQueryCmd (..)
