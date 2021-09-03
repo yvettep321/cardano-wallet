@@ -26,7 +26,7 @@ module Cardano.Wallet.Primitive.CoinSelection
     , SelectionConstraints (..)
     , SelectionParams (..)
 
-    , prepareOutputs
+    , prepareOutputsForMinUTxO
     , ErrWalletSelection (..)
     , ErrPrepareOutputs (..)
     , ErrOutputTokenBundleSizeExceedsLimit (..)
@@ -45,7 +45,7 @@ import Cardano.Wallet.Primitive.CoinSelection.Balance
     , prepareOutputsWith
     )
 import Cardano.Wallet.Primitive.Types.Address
-    ( Address )
+    ( Address (..) )
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..), addCoin )
 import Cardano.Wallet.Primitive.Types.TokenBundle
@@ -57,7 +57,7 @@ import Cardano.Wallet.Primitive.Types.TokenQuantity
 import Cardano.Wallet.Primitive.Types.Tx
     ( TokenBundleSizeAssessment (..)
     , TokenBundleSizeAssessor (..)
-    , TxOut
+    , TxOut (..)
     , txOutMaxTokenQuantity
     )
 import Cardano.Wallet.Primitive.Types.UTxOIndex
@@ -84,6 +84,7 @@ import Numeric.Natural
 import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TokenBundle
 import qualified Cardano.Wallet.Primitive.Types.TokenMap as TokenMap
 import qualified Data.Foldable as F
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as Set
 
 -- | Performs a coin selection.
@@ -100,17 +101,18 @@ runWalletCoinSelection
     => SelectionConstraints
     -> SelectionParams
     -> ExceptT ErrWalletSelection m (SelectionResult TokenBundle)
-runWalletCoinSelection SelectionConstraints{..} SelectionParams{..} = do
+runWalletCoinSelection sc@SelectionConstraints{..} SelectionParams{..} = do
     -- TODO: [ADP-1037] Adjust coin selection and fee estimation to handle
     -- collateral inputs.
     --
     -- TODO: [ADP-1070] Adjust coin selection and fee estimation to handle
     -- pre-existing inputs.
     preparedOutputsToCover <- withExceptT ErrWalletSelectionOutputs $ ExceptT $
-        pure $ prepareOutputs SelectionConstraints{..} outputsToCover
-    withExceptT ErrWalletSelectionBalance $ ExceptT $ performSelection
+        pure $ ensureNonEmptyOutputs >>= prepareOutputsForMinUTxO sc
+
+    withExceptT ErrWalletSelectionBalance $ ExceptT $ fixup <$> performSelection
         computeMinimumAdaQuantity
-        computeMinimumCostWithDeposits
+        computeMinimumCost
         assessTokenBundleSize
         SelectionCriteria
             { outputsToCover = preparedOutputsToCover
@@ -126,8 +128,115 @@ runWalletCoinSelection SelectionConstraints{..} SelectionParams{..} = do
     scale :: Natural -> Coin -> Coin
     scale s (Coin a) = Coin (fromIntegral s * a)
 
-    computeMinimumCostWithDeposits tx = computeMinimumCost tx
+    _computeMinimumCostWithDeposits tx = computeMinimumCost tx
         `plusDeposits` certificateDepositsTaken
+
+    extraCoinSink = scale certificateDepositsTaken depositAmount
+    extraCoinSinkBundle = TokenBundle.fromCoin extraCoinSink
+
+    ensureNonEmptyOutputs = case NE.nonEmpty outputsToCover of
+        Just (TxOut hd amt :| tl) -> Right $
+            TxOut hd (TokenBundle.add extraCoinSinkBundle amt) :| tl
+        Nothing -> case extraCoinSink of
+            Coin 0 -> Left ErrPrepareOutputsTxOutMissing
+            amt -> Right $ TxOut dummyAddress (TokenBundle.fromCoin amt) :| []
+    dummyAddress = Address ""
+
+    fixup sel = case extraCoinSink of
+        Coin 0 -> sel
+        amt -> over #outputsCovered (filter ((/= dummyAddress) . view #address))
+            . over #changeGenerated (addToHead surplus) $ sel
+     where
+         surplus = TokenBundle.unsafeSubtract
+                (view #tokens (head $ outputsCovered sel))
+                extraCoinSinkBundle
+{-
+selectAssetsNoOutputsBroken
+    :: forall ctx s k result.
+        ( HasTransactionLayer k ctx
+        , HasLogger WalletWorkerLog ctx
+        , HasDBLayer IO s k ctx
+        , HasNetworkLayer IO ctx
+        )
+    => ctx
+    -> WalletId
+    -> (UTxOIndex, Wallet s, Set Tx)
+    -> TransactionCtx
+    -> (s -> SelectionResult TokenBundle -> result)
+    -> ExceptT ErrSelectAssets IO result
+selectAssetsNoOutputsBroken ctx wid wal txCtx transform = do
+    -- NOTE:
+    -- Could be made nicer by allowing 'performSelection' to run with no target
+    -- outputs, but to satisfy a minimum Ada target.
+    --
+    -- To work-around this immediately, I am simply creating a dummy output of
+    -- exactly the required deposit amount, only to discard it on the final
+    -- result. The resulting selection will therefore have a delta that is at
+    -- least the size of the deposit (in practice, slightly bigger because this
+    -- extra outputs also increases the apparent minimum fee).
+    deposit <- withExceptT ErrSelectAssetsNoSuchWallet $
+        calcMinimumDeposit @_ @s @k ctx wid
+    let txCtx' = over #txDelegationActions (filter (/= RegisterKey)) txCtx
+    let
+    let dummyOutput  = TxOut dummyAddress (TokenBundle.fromCoin deposit)
+    let outs = dummyOutput :| []
+    selectAssets @ctx @s @k ctx wal txCtx' outs $ \s sel -> transform s $ sel
+        { outputsCovered = mempty
+        , changeGenerated =
+            let
+                -- NOTE 1: There are in principle 6 cases we may ran into, which
+                -- can be grouped in 3 groups of 2 cases:
+                --
+                -- (1) When registering a key and delegating
+                -- (2) When delegating
+                -- (3) When de-registering a key
+                --
+                -- For each case, there may be one or zero change output. For
+                -- all 3 cases, we'll treat the case where there's no change
+                -- output as an edge-case and also leave no change. This may be
+                -- in practice more costly than necessary because, by removing
+                -- the fake output, we'd in practice have some more Ada
+                -- available to create a change (and a less expensive
+                -- transaction). Yet, this would require quite some extra logic
+                -- here in addition to all the existing logic inside the
+                -- CoinSelection/Balance module already. If we were not
+                -- able to add a change output already, let's not try to do it
+                -- here. Worse that can be list is:
+                --
+                --     max (minUTxOValue, keyDepositValue)
+                --
+                -- which we'll deem acceptable under the circumstances (that can
+                -- only really happen if one is trying to delegate with already
+                -- a very small Ada balance, so that it's left with no Ada after
+                -- having paid for the delegation certificate. Why would one be
+                -- delegating almost nothing certainly is an edge-case not worth
+                -- considering for too long).
+                --
+                -- However, if a change output has been create, then we want to
+                -- transfer the surplus of value from the change output to that
+                -- change output (which is already safe). That surplus is
+                -- non-null if the `minUTxOValue` protocol parameter is
+                -- non-null, and comes from the fact that the selection
+                -- algorithm automatically assigns this value when presented
+                -- with a null output. In the case of (1), the output's value is
+                -- equal to the stake key deposit value, which may be in
+                -- practice greater than the `minUTxOValue`. In the case of (2)
+                -- and (3), the deposit is null. So it suffices to subtract
+                -- `deposit` to the value of the covered output to get the
+                -- surplus.
+                --
+                -- NOTE 2: This subtraction and head are safe because of the
+                -- invariants enforced by the asset selection algorithm. The
+                -- output list has the exact same length as the input list, and
+                -- outputs are at least as large as the specified outputs.
+                surplus = TokenBundle.unsafeSubtract
+                    (view #tokens (head $ outputsCovered sel))
+                    (TokenBundle.fromCoin deposit)
+            in
+                surplus `addToHead` changeGenerated sel
+        }
+  where
+-}
 
 -- | Specifies all constraints required for coin selection.
 --
@@ -186,7 +295,7 @@ data SelectionParams = SelectionParams
         :: !Natural
         -- ^ Number of deposits from stake key de-registrations.
     , outputsToCover
-        :: !(NonEmpty TxOut)
+        :: ![TxOut]
         -- ^ Specifies a set of outputs that must be paid for.
     , utxoAvailable
         :: !UTxOIndex
@@ -205,11 +314,11 @@ data ErrWalletSelection
 
 -- | Prepares the given user-specified outputs, ensuring that they are valid.
 --
-prepareOutputs
+prepareOutputsForMinUTxO
     :: SelectionConstraints
     -> NonEmpty TxOut
     -> Either ErrPrepareOutputs (NonEmpty TxOut)
-prepareOutputs constraints outputsUnprepared
+prepareOutputsForMinUTxO constraints outputsUnprepared
     | (address, assetCount) : _ <- excessivelyLargeBundles =
         Left $
             -- We encountered one or more excessively large token bundles.
@@ -266,8 +375,8 @@ prepareOutputs constraints outputsUnprepared
         , quantity > txOutMaxTokenQuantity
         ]
 
-    outputsToCover =
-        prepareOutputsWith computeMinimumAdaQuantity outputsUnprepared
+    outputsToCover = prepareOutputsWith computeMinimumAdaQuantity
+        outputsUnprepared
 
 -- | Indicates a problem when preparing outputs for a coin selection.
 --
@@ -276,6 +385,7 @@ data ErrPrepareOutputs
         ErrOutputTokenBundleSizeExceedsLimit
     | ErrPrepareOutputsTokenQuantityExceedsLimit
         ErrOutputTokenQuantityExceedsLimit
+    | ErrPrepareOutputsTxOutMissing
     deriving (Eq, Generic, Show)
 
 data ErrOutputTokenBundleSizeExceedsLimit = ErrOutputTokenBundleSizeExceedsLimit

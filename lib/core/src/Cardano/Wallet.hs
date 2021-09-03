@@ -110,7 +110,6 @@ module Cardano.Wallet
     , getTxExpiry
     , selectAssets
     , readWalletUTxOIndex
-    , selectAssetsNoOutputs
     , assignChangeAddresses
     , assignChangeAddressesAndUpdateDb
     , assignChangeAddressesWithoutDbUpdate
@@ -456,7 +455,7 @@ import Data.Function
 import Data.Functor
     ( ($>) )
 import Data.Generics.Internal.VL.Lens
-    ( Lens', over, view, (^.) )
+    ( Lens', view, (^.) )
 import Data.Generics.Labels
     ()
 import Data.Generics.Product.Typed
@@ -1395,95 +1394,6 @@ readWalletUTxOIndex ctx wid = do
     let utxo = UTxOIndex.fromUTxO $ availableUTxO @s pending cp
     return (utxo, cp, pending)
 
-selectAssetsNoOutputs
-    :: forall ctx s k result.
-        ( HasTransactionLayer k ctx
-        , HasLogger WalletWorkerLog ctx
-        , HasDBLayer IO s k ctx
-        , HasNetworkLayer IO ctx
-        )
-    => ctx
-    -> WalletId
-    -> (UTxOIndex, Wallet s, Set Tx)
-    -> TransactionCtx
-    -> (s -> SelectionResult TokenBundle -> result)
-    -> ExceptT ErrSelectAssets IO result
-selectAssetsNoOutputs ctx wid wal txCtx transform = do
-    -- NOTE:
-    -- Could be made nicer by allowing 'performSelection' to run with no target
-    -- outputs, but to satisfy a minimum Ada target.
-    --
-    -- To work-around this immediately, I am simply creating a dummy output of
-    -- exactly the required deposit amount, only to discard it on the final
-    -- result. The resulting selection will therefore have a delta that is at
-    -- least the size of the deposit (in practice, slightly bigger because this
-    -- extra outputs also increases the apparent minimum fee).
-    deposit <- withExceptT ErrSelectAssetsNoSuchWallet $
-        calcMinimumDeposit @_ @s @k ctx wid
-    let txCtx' = over #txDelegationActions (filter (/= RegisterKey)) txCtx
-    let dummyAddress = Address ""
-    let dummyOutput  = TxOut dummyAddress (TokenBundle.fromCoin deposit)
-    let outs = dummyOutput :| []
-    selectAssets @ctx @s @k ctx wal txCtx' outs $ \s sel -> transform s $ sel
-        { outputsCovered = mempty
-        , changeGenerated =
-            let
-                -- NOTE 1: There are in principle 6 cases we may ran into, which
-                -- can be grouped in 3 groups of 2 cases:
-                --
-                -- (1) When registering a key and delegating
-                -- (2) When delegating
-                -- (3) When de-registering a key
-                --
-                -- For each case, there may be one or zero change output. For
-                -- all 3 cases, we'll treat the case where there's no change
-                -- output as an edge-case and also leave no change. This may be
-                -- in practice more costly than necessary because, by removing
-                -- the fake output, we'd in practice have some more Ada
-                -- available to create a change (and a less expensive
-                -- transaction). Yet, this would require quite some extra logic
-                -- here in addition to all the existing logic inside the
-                -- CoinSelection/Balance module already. If we were not
-                -- able to add a change output already, let's not try to do it
-                -- here. Worse that can be list is:
-                --
-                --     max (minUTxOValue, keyDepositValue)
-                --
-                -- which we'll deem acceptable under the circumstances (that can
-                -- only really happen if one is trying to delegate with already
-                -- a very small Ada balance, so that it's left with no Ada after
-                -- having paid for the delegation certificate. Why would one be
-                -- delegating almost nothing certainly is an edge-case not worth
-                -- considering for too long).
-                --
-                -- However, if a change output has been create, then we want to
-                -- transfer the surplus of value from the change output to that
-                -- change output (which is already safe). That surplus is
-                -- non-null if the `minUTxOValue` protocol parameter is
-                -- non-null, and comes from the fact that the selection
-                -- algorithm automatically assigns this value when presented
-                -- with a null output. In the case of (1), the output's value is
-                -- equal to the stake key deposit value, which may be in
-                -- practice greater than the `minUTxOValue`. In the case of (2)
-                -- and (3), the deposit is null. So it suffices to subtract
-                -- `deposit` to the value of the covered output to get the
-                -- surplus.
-                --
-                -- NOTE 2: This subtraction and head are safe because of the
-                -- invariants enforced by the asset selection algorithm. The
-                -- output list has the exact same length as the input list, and
-                -- outputs are at least as large as the specified outputs.
-                surplus = TokenBundle.unsafeSubtract
-                    (view #tokens (head $ outputsCovered sel))
-                    (TokenBundle.fromCoin deposit)
-            in
-                surplus `addToHead` changeGenerated sel
-        }
-  where
-    addToHead :: TokenBundle -> [TokenBundle] -> [TokenBundle]
-    addToHead _    [] = []
-    addToHead x (h:q) = TokenBundle.add x h : q
-
 -- | Calculate the minimum coin values required for a bunch of specified
 -- outputs.
 calcMinimumCoinValues
@@ -1509,7 +1419,7 @@ calcMinimumCoinValues ctx outs = do
 -- and its associated cost. That is, the cost is equal to the difference between
 -- inputs and outputs.
 selectAssets
-    :: forall ctx s k result.
+    :: forall ctx s k.
         ( HasTransactionLayer k ctx
         , HasLogger WalletWorkerLog ctx
         , HasNetworkLayer IO ctx
@@ -1517,10 +1427,9 @@ selectAssets
     => ctx
     -> (UTxOIndex, Wallet s, Set Tx)
     -> TransactionCtx
-    -> NonEmpty TxOut
-    -> (s -> SelectionResult TokenBundle -> result)
-    -> ExceptT ErrSelectAssets IO result
-selectAssets ctx (utxoAvailable, cp, pending) txCtx outputs transform = do
+    -> [TxOut]
+    -> ExceptT ErrSelectAssets IO (SelectionResult TokenBundle)
+selectAssets ctx (utxoAvailable, cp, pending) txCtx outputs = do
     sel <- traceResult trSelect $ do
         guardPendingWithdrawal
         pp <- liftIO $ currentProtocolParameters nl
@@ -1528,7 +1437,7 @@ selectAssets ctx (utxoAvailable, cp, pending) txCtx outputs transform = do
             SelectionConstraints
                 { assessTokenBundleSize =
                     tokenBundleSizeAssessor tl $
-                        pp ^. (#txParameters . #getTokenBundleMaxSize)
+                        pp ^. #txParameters . #getTokenBundleMaxSize
                 , computeMinimumAdaQuantity =
                     view #txOutputMinimumAdaQuantity $ constraints tl pp
                 , computeMinimumCost =
@@ -1550,7 +1459,7 @@ selectAssets ctx (utxoAvailable, cp, pending) txCtx outputs transform = do
                 , utxoAvailable
                 }
     liftIO $ traceWith tr $ MsgSelectionDetail sel
-    pure $ transform (getState cp) sel
+    pure $ sel
   where
     nl = ctx ^. networkLayer
     tl = ctx ^. transactionLayer @k
@@ -1577,9 +1486,9 @@ selectAssets ctx (utxoAvailable, cp, pending) txCtx outputs transform = do
                     throwE $ ErrSelectAssetsAlreadyWithdrawing pendingWithdrawal
             _otherwise ->
                 pure ()
-      where
-        hasWithdrawal :: Tx -> Bool
-        hasWithdrawal = not . null . withdrawals
+
+    hasWithdrawal :: Tx -> Bool
+    hasWithdrawal = not . null . withdrawals
 
     handleErrors = withExceptT ErrSelectAssets
 
@@ -2917,7 +2826,7 @@ data WalletFollowLog
 
 -- | Log messages from API server actions running in a wallet worker context.
 data WalletLog
-    = MsgSelectAssets UTxOIndex TransactionCtx (NonEmpty TxOut) (BracketLog' (Either ErrSelectAssets (SelectionResult TokenBundle)))
+    = MsgSelectAssets UTxOIndex TransactionCtx [TxOut] (BracketLog' (Either ErrSelectAssets (SelectionResult TokenBundle)))
     | MsgSelectionDetail (SelectionResult TokenBundle)
     | MsgMigrationUTxOBefore UTxOStatistics
     | MsgMigrationUTxOAfter UTxOStatistics
@@ -2969,7 +2878,7 @@ instance Buildable WalletLog where
             "selectAssets"
             [ ("context", build txCtx)
             , ("|utxo|", build (UTxOIndex.size utxo))
-            , ("#recipients", build (NE.length recipients))
+            , ("#recipients", build (length recipients))
             ] b
         MsgSelectionDetail sel ->
             nameF "Selection report (detailed)" $
