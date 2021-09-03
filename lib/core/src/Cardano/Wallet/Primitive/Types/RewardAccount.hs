@@ -8,7 +8,7 @@
 -- Copyright: © 2018-2021 IOHK
 -- License: Apache-2.0
 --
--- This module provides types related to delegation of thee wallet's stake to
+-- This module provides types related to delegation of the wallet's stake to
 -- pools.
 --
 module Cardano.Wallet.Primitive.Types.RewardAccount
@@ -18,6 +18,8 @@ module Cardano.Wallet.Primitive.Types.RewardAccount
     , DelegationCertificate (..)
     , dlgCertAccount
     , dlgCertPoolId
+    , DelegationAction (..)
+    , delegationActionDeposit
 
     -- * Stake key management
     , StakeKeyCertificate (..)
@@ -36,7 +38,7 @@ import Data.ByteString
 import Data.Text.Class
     ( FromText (..), ToText (..) )
 import Fmt
-    ( Buildable (..) )
+    ( Buildable (..), genericF )
 import GHC.Generics
     ( Generic )
 import Quiet
@@ -88,6 +90,24 @@ dlgCertPoolId = \case
     CertDelegateNone{} -> Nothing
     CertDelegateFull _ poolId -> Just poolId
     CertRegisterKey _ -> Nothing
+
+-- | Whether the user is attempting any particular delegation action.
+data DelegationAction = RegisterKey | Delegate PoolId | DeregisterKey
+    deriving (Show, Eq, Generic)
+
+instance Buildable DelegationAction where
+    build = genericF
+
+-- | Get the number of deposits required for the given delegation action. This
+-- should be multiplied by the actual deposit amount for use in a transaction.
+--
+-- A positive number means deposit returned and a negative number means deposit
+-- taken.
+delegationActionDeposit :: Integral n => (n -> a) -> DelegationAction -> a
+delegationActionDeposit f = \case
+    RegisterKey -> f (-1)
+    Delegate _ -> f 0
+    DeregisterKey -> f 1
 
 {-------------------------------------------------------------------------------
                               Stake Key Management

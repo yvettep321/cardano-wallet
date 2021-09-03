@@ -362,7 +362,12 @@ import Cardano.Wallet.Primitive.Types.Coin
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Primitive.Types.RewardAccount
-    ( DelegationCertificate (..), RewardAccount (..), dlgCertPoolId )
+    ( DelegationAction (..)
+    , DelegationCertificate (..)
+    , RewardAccount (..)
+    , delegationActionDeposit
+    , dlgCertPoolId
+    )
 import Cardano.Wallet.Primitive.Types.StakePools
     ( PoolLifeCycleStatus (..), getPoolRetirementCertificate )
 import Cardano.Wallet.Primitive.Types.TokenBundle
@@ -392,7 +397,6 @@ import Cardano.Wallet.Primitive.Types.UTxOIndex
     ( UTxOIndex )
 import Cardano.Wallet.Transaction
     ( DecryptedSigningKey (..)
-    , DelegationAction (..)
     , ErrCannotJoin (..)
     , ErrCannotQuit (..)
     , ErrMkTransaction
@@ -402,7 +406,6 @@ import Cardano.Wallet.Transaction
     , TransactionLayer (..)
     , Withdrawal (..)
     , defaultTransactionCtx
-    , delegationActionDeposit
     , withdrawalToCoin
     )
 import Control.DeepSeq
@@ -453,7 +456,7 @@ import Data.Function
 import Data.Functor
     ( ($>) )
 import Data.Generics.Internal.VL.Lens
-    ( Lens', view, (^.) )
+    ( Lens', over, view, (^.) )
 import Data.Generics.Labels
     ()
 import Data.Generics.Product.Typed
@@ -1405,7 +1408,7 @@ selectAssetsNoOutputs
     -> TransactionCtx
     -> (s -> SelectionResult TokenBundle -> result)
     -> ExceptT ErrSelectAssets IO result
-selectAssetsNoOutputs ctx wid wal tx transform = do
+selectAssetsNoOutputs ctx wid wal txCtx transform = do
     -- NOTE:
     -- Could be made nicer by allowing 'performSelection' to run with no target
     -- outputs, but to satisfy a minimum Ada target.
@@ -1417,10 +1420,11 @@ selectAssetsNoOutputs ctx wid wal tx transform = do
     -- extra outputs also increases the apparent minimum fee).
     deposit <- withExceptT ErrSelectAssetsNoSuchWallet $
         calcMinimumDeposit @_ @s @k ctx wid
+    let txCtx' = over #txDelegationActions (filter (/= RegisterKey)) txCtx
     let dummyAddress = Address ""
     let dummyOutput  = TxOut dummyAddress (TokenBundle.fromCoin deposit)
     let outs = dummyOutput :| []
-    selectAssets @ctx @s @k ctx wal tx outs $ \s sel -> transform s $ sel
+    selectAssets @ctx @s @k ctx wal txCtx' outs $ \s sel -> transform s $ sel
         { outputsCovered = mempty
         , changeGenerated =
             let

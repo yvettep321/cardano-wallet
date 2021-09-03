@@ -17,13 +17,11 @@
 -- An extra interface for operation on transactions (e.g. creating witnesses,
 -- estimating size...). This makes it possible to decouple those operations from
 -- our wallet layer, keeping the implementation flexible to various backends.
-
+--
 module Cardano.Wallet.Transaction
     (
     -- * Interface
       TransactionLayer (..)
-    , DelegationAction (..)
-    , delegationActionDeposit
     , TransactionCtx (..)
     , defaultTransactionCtx
     , Withdrawal (..)
@@ -71,7 +69,7 @@ import Cardano.Wallet.Primitive.Types.Address
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.RewardAccount
-    ( RewardAccount )
+    ( DelegationAction, RewardAccount )
 import Cardano.Wallet.Primitive.Types.Tx
     ( TokenBundleSizeAssessor
     , Tx (..)
@@ -225,24 +223,6 @@ withdrawalRewardAccount = \case
     WithdrawalSelf acct _ _ -> Just acct
     WithdrawalExternal acct _ _ -> Just acct
     NoWithdrawal -> Nothing
-
--- | Whether the user is attempting any particular delegation action.
-data DelegationAction = RegisterKey | Delegate PoolId | DeregisterKey
-    deriving (Show, Eq, Generic)
-
-instance Buildable DelegationAction where
-    build = genericF
-
--- | Get the number of deposits required for the given delegation action. This
--- should be multiplied by the actual deposit amount for use in a transaction.
---
--- A positive number means deposit returned and a negative number means deposit
--- taken.
-delegationActionDeposit :: Integral n => (n -> a) -> DelegationAction -> a
-delegationActionDeposit f = \case
-    RegisterKey -> f (-1)
-    Delegate _ -> f 0
-    DeregisterKey -> f 1
 
 -- | A transaction with information about the witnesses (if any) which were
 -- added by 'signTransaction`.

@@ -414,6 +414,8 @@ import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..), coinQuantity )
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
+import Cardano.Wallet.Primitive.Types.RewardAccount
+    ( DelegationAction (..) )
 import Cardano.Wallet.Primitive.Types.StakePools
     ( PoolLifeCycleStatus (..) )
 import Cardano.Wallet.Primitive.Types.TokenBundle
@@ -443,8 +445,7 @@ import Cardano.Wallet.Registry
 import Cardano.Wallet.TokenMetadata
     ( TokenMetadataClient, fillMetadata )
 import Cardano.Wallet.Transaction
-    ( DelegationAction (..)
-    , ErrCannotJoin (..)
+    ( ErrCannotJoin (..)
     , ErrCannotQuit (..)
     , ErrMkTransaction (..)
     , TransactionCtx (..)

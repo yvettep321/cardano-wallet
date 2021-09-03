@@ -58,7 +58,7 @@ import Cardano.Api
     , cardanoEraStyle
     )
 import Cardano.Wallet.Primitive.AddressDerivation
-    ( Depth (..), RewardAccount (..), WalletKey (..) )
+    ( Depth (..), WalletKey (..) )
 import Cardano.Wallet.Primitive.AddressDerivation.Byron
     ( ByronKey )
 import Cardano.Wallet.Primitive.AddressDerivation.Icarus
@@ -77,6 +77,8 @@ import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..), coinToInteger )
+import Cardano.Wallet.Primitive.Types.RewardAccount
+    ( DelegationAction (..), RewardAccount (..), delegationActionDeposit )
 import Cardano.Wallet.Primitive.Types.TokenBundle
     ( TokenBundle )
 import Cardano.Wallet.Primitive.Types.TokenMap
@@ -117,14 +119,12 @@ import Cardano.Wallet.Shelley.Compatibility.Ledger
     ( computeMinimumAdaQuantity )
 import Cardano.Wallet.Transaction
     ( DecryptedSigningKey (..)
-    , DelegationAction (..)
     , ErrMkTransaction (..)
     , SignTransactionKeyStore (..)
     , SignTransactionResult (..)
     , TransactionCtx (..)
     , TransactionLayer (..)
     , Withdrawal
-    , delegationActionDeposit
     , keyStoreLookup
     , keyStoreLookupStake
     , withdrawalRewardAccount

@@ -19,10 +19,10 @@ import Cardano.Wallet.Primitive.Types.Address
     ( Address )
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
+import Cardano.Wallet.Primitive.Types.RewardAccount
+    ( DelegationAction )
 import Cardano.Wallet.Primitive.Types.StakePools
     ( PoolRetirementCertificate )
-import Cardano.Wallet.Transaction
-    ( DelegationAction )
 import Data.IORef
     ( IORef )
 import Data.Text
