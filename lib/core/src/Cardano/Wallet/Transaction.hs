@@ -15,7 +15,7 @@
 -- An extra interface for operation on transactions (e.g. creating witnesses,
 -- estimating size...). This makes it possible to decouple those operations from
 -- our wallet layer, keeping the implementation flexible to various backends.
-
+--
 module Cardano.Wallet.Transaction
     (
     -- * Interface
@@ -27,9 +27,11 @@ module Cardano.Wallet.Transaction
     , withdrawalToCoin
 
     -- * Errors
-    , ErrMkTx (..)
-    , ErrDecodeSignedTx (..)
-
+    , ErrSignTx (..)
+    , ErrMkTransaction (..)
+    , ErrCannotJoin (..)
+    , ErrCannotQuit (..)
+    , ErrUpdateSealedTx (..)
     ) where
 
 import Prelude
@@ -42,8 +44,15 @@ import Cardano.Wallet.Primitive.AddressDerivation
     ( Depth (..), DerivationIndex, Passphrase )
 import Cardano.Wallet.Primitive.CoinSelection.Balance
     ( SelectionLimit, SelectionResult, SelectionSkeleton )
+import Cardano.Wallet.Primitive.Slotting
+    ( PastHorizonException )
 import Cardano.Wallet.Primitive.Types
-    ( PoolId, ProtocolParameters, SlotNo (..), TokenBundleMaxSize (..) )
+    ( PoolId
+    , ProtocolParameters
+    , SlotNo (..)
+    , TokenBundleMaxSize (..)
+    , WalletId
+    )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
 import Cardano.Wallet.Primitive.Types.Coin
@@ -51,24 +60,25 @@ import Cardano.Wallet.Primitive.Types.Coin
 import Cardano.Wallet.Primitive.Types.RewardAccount
     ( RewardAccount )
 import Cardano.Wallet.Primitive.Types.Tx
-    ( SealedTx (..)
-    , SerialisedTx (..)
-    , TokenBundleSizeAssessor
+    ( TokenBundleSizeAssessor
     , Tx (..)
     , TxConstraints
+    , TxIn
     , TxMetadata
     , TxOut
     )
-import Data.ByteString
-    ( ByteString )
 import Data.List.NonEmpty
     ( NonEmpty )
 import Data.Text
     ( Text )
+import Data.Word
+    ( Word64 )
+import Fmt
+    ( Buildable (..), genericF )
 import GHC.Generics
     ( Generic )
 
-data TransactionLayer k = TransactionLayer
+data TransactionLayer k tx = TransactionLayer
     { mkTransaction
         :: AnyCardanoEra
             -- Era for which the transaction should be created.
@@ -83,7 +93,7 @@ data TransactionLayer k = TransactionLayer
         -> SelectionResult TxOut
             -- A balanced coin selection where all change addresses have been
             -- assigned.
-        -> Either ErrMkTx (Tx, SealedTx)
+        -> Either ErrMkTransaction (Tx, tx)
         -- ^ Construct a standard transaction
         --
         -- " Standard " here refers to the fact that we do not deal with redemption,
@@ -104,7 +114,7 @@ data TransactionLayer k = TransactionLayer
         -> SelectionResult TxOut
             -- A balanced coin selection where all change addresses have been
             -- assigned.
-        -> Either ErrMkTx SerialisedTx
+        -> Either ErrMkTransaction tx
         -- ^ Construct a standard unsigned transaction
         --
         -- " Standard " here refers to the fact that we do not deal with redemption,
@@ -123,6 +133,14 @@ data TransactionLayer k = TransactionLayer
         -- ^ Compute a minimal fee amount necessary to pay for a given selection
         -- This also includes necessary deposits.
 
+    , calcScriptExecutionCost
+        :: ProtocolParameters
+            -- Current protocol parameters
+        -> tx
+            -- The constructed transaction that could contain plutus scripts
+        -> Coin
+        -- ^ Compute an execution costs of scripts in a given transaction.
+
     , computeSelectionLimit
         :: ProtocolParameters
         -> TransactionCtx
@@ -139,11 +157,14 @@ data TransactionLayer k = TransactionLayer
         -> TxConstraints
         -- The set of constraints that apply to all transactions.
 
-    , decodeSignedTx
-        :: AnyCardanoEra
-        -> ByteString
-        -> Either ErrDecodeSignedTx (Tx, SealedTx)
-        -- ^ Decode an externally-signed transaction to the chain producer
+    , decodeTx :: tx -> Tx
+    -- ^ Decode an externally-created transaction.
+
+    , updateTx
+        :: tx
+        -> ( [TxIn], [TxOut] )
+        -> Either ErrUpdateSealedTx (tx, Word64)
+        -- ^ Update tx by adding additional inputs and outputs and give recalculated fee
     }
     deriving Generic
 
@@ -159,6 +180,9 @@ data TransactionCtx = TransactionCtx
     -- ^ Transaction expiry (TTL) slot.
     , txDelegationAction :: Maybe DelegationAction
     -- ^ An additional delegation to take.
+    , txPlutusScriptExecutionCost :: Coin
+    -- ^ Total execution cost of plutus scripts, determined by their execution units
+    -- and prices obtained from network.
     } deriving (Show, Generic, Eq)
 
 data Withdrawal
@@ -181,25 +205,50 @@ defaultTransactionCtx = TransactionCtx
     , txMetadata = Nothing
     , txTimeToLive = maxBound
     , txDelegationAction = Nothing
+    , txPlutusScriptExecutionCost = Coin 0
     }
 
 -- | Whether the user is attempting any particular delegation action.
 data DelegationAction = RegisterKeyAndJoin PoolId | Join PoolId | Quit
     deriving (Show, Eq, Generic)
 
--- | Error while trying to decode externally signed transaction
-data ErrDecodeSignedTx
-    = ErrDecodeSignedTxWrongPayload Text
-    | ErrDecodeSignedTxNotSupported
-    deriving (Show, Eq)
+instance Buildable DelegationAction where
+    build = genericF
 
--- | Possible signing error
-data ErrMkTx
-    = ErrKeyNotFoundForAddress Address
-    -- ^ We tried to sign a transaction with inputs that are unknown to us?
-    | ErrConstructedInvalidTx Text
+data ErrMkTransaction
+    = ErrMkTransactionNoSuchWallet WalletId
+    | ErrMkTransactionTxBodyError Text
     -- ^ We failed to construct a transaction for some reasons.
-    | ErrInvalidEra AnyCardanoEra
+    | ErrMkTransactionInvalidEra AnyCardanoEra
     -- ^ Should never happen, means that that we have programmatically provided
     -- an invalid era.
+    | ErrMkTransactionJoinStakePool ErrCannotJoin
+    | ErrMkTransactionQuitStakePool ErrCannotQuit
+    | ErrMkTransactionIncorrectTTL PastHorizonException
+    | ErrKeyNotFoundForAddress Address
+    deriving (Generic, Eq, Show)
+
+-- | Possible signing error
+data ErrSignTx
+    = ErrSignTxAddressUnknown TxIn
+    -- ^ We tried to sign a transaction with inputs that are unknown to us?
+    | ErrSignTxKeyNotFound Address
+    -- ^ We tried to sign a transaction with inputs that are unknown to us?
+    | ErrSignTxUnimplemented
+    -- ^ TODO: [ADP-919] Remove ErrSignTxUnimplemented
+    deriving (Generic, Eq, Show)
+
+data ErrCannotJoin
+    = ErrAlreadyDelegating PoolId
+    | ErrNoSuchPool PoolId
+    deriving (Generic, Eq, Show)
+
+data ErrCannotQuit
+    = ErrNotDelegatingOrAboutTo
+    | ErrNonNullRewards Coin
     deriving (Eq, Show)
+
+newtype ErrUpdateSealedTx
+    = ErrUpdateSealedTxBodyError Text
+    -- ^ We failed to construct a transaction for some reasons.
+    deriving (Generic, Eq, Show)

@@ -61,6 +61,7 @@ import Cardano.Wallet.Api.Types
     , ApiAddressInspect (..)
     , ApiAddressInspectData (..)
     , ApiAddressT
+    , ApiBalanceTransactionPostDataT
     , ApiByronWallet
     , ApiBytesT (..)
     , ApiCoinSelectionT
@@ -99,13 +100,13 @@ import Cardano.Wallet.Primitive.Types.Address
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Tx
-    ( SerialisedTx )
+    ( SealedTx, SerialisedTx (..), unsafeSealedTxFromBytes )
 import Control.Monad
     ( void )
 import Data.Coerce
     ( coerce )
 import Data.Generics.Internal.VL.Lens
-    ( (^.) )
+    ( view, (^.) )
 import Data.Generics.Labels
     ()
 import Data.Proxy
@@ -188,6 +189,10 @@ data TransactionClient = TransactionClient
     , constructTransaction
         :: ApiT WalletId
         -> ApiConstructTransactionDataT Aeson.Value
+        -> ClientM (ApiConstructTransactionT Aeson.Value)
+    , balanceTransaction
+        :: ApiT WalletId
+        -> ApiBalanceTransactionPostDataT Aeson.Value
         -> ClientM (ApiConstructTransactionT Aeson.Value)
     }
 
@@ -304,6 +309,7 @@ transactionClient =
             :<|> _deleteTransaction
             :<|> _postTransaction
             :<|> _postTransactionFee
+            :<|> _balanceTransaction
             = client (Proxy @("v2" :> (ShelleyTransactions Aeson.Value)))
 
         _postExternalTransaction
@@ -314,11 +320,15 @@ transactionClient =
             , signTransaction = _signTransaction
             , postTransaction = _postTransaction
             , postTransactionFee = _postTransactionFee
-            , postExternalTransaction = _postExternalTransaction
+            , postExternalTransaction = _postExternalTransaction . fromSerialisedTx
             , deleteTransaction = _deleteTransaction
             , getTransaction = _getTransaction
             , constructTransaction = _constructTransaction
+            , balanceTransaction = _balanceTransaction
             }
+
+fromSerialisedTx :: ApiBytesT base SerialisedTx -> ApiT SealedTx
+fromSerialisedTx = ApiT . unsafeSealedTxFromBytes . view (#getApiBytesT . #payload)
 
 -- | Produces a 'TransactionClient n' working against the /byron-wallets API.
 byronTransactionClient
@@ -342,10 +352,11 @@ byronTransactionClient =
         , signTransaction = _signTransaction
         , postTransaction = _postTransaction
         , postTransactionFee = _postTransactionFee
-        , postExternalTransaction = _postExternalTransaction
+        , postExternalTransaction = _postExternalTransaction . fromSerialisedTx
         , deleteTransaction = _deleteTransaction
         , getTransaction = _getTransaction
         , constructTransaction = _constructTransaction
+        , balanceTransaction = error "balance transaction endpoint not supported for byron"
         }
 
 -- | Produces an 'AddressClient n' working against the /wallets API
@@ -446,3 +457,4 @@ type instance ApiConstructTransactionDataT Aeson.Value = Aeson.Value
 type instance PostTransactionOldDataT Aeson.Value = Aeson.Value
 type instance PostTransactionFeeOldDataT Aeson.Value = Aeson.Value
 type instance ApiPutAddressesDataT Aeson.Value = Aeson.Value
+type instance ApiBalanceTransactionPostDataT Aeson.Value = Aeson.Value

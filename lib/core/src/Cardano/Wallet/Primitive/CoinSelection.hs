@@ -34,11 +34,7 @@ module Cardano.Wallet.Primitive.CoinSelection
 import Prelude
 
 import Cardano.Wallet.Primitive.CoinSelection.Balance
-    ( SelectionCriteria (..)
-    , SelectionLimit
-    , SelectionResult
-    , SelectionSkeleton
-    )
+    ( SelectionLimit, SelectionResult, SelectionSkeleton )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address )
 import Cardano.Wallet.Primitive.Types.Coin
@@ -97,10 +93,10 @@ performSelection
 performSelection selectionConstraints selectionParams =
     -- TODO:
     --
-    -- https://jira.iohk.io/browse/ADP-1037
+    -- https://input-output.atlassian.net/browse/ADP-1037
     -- Adjust coin selection and fee estimation to handle collateral inputs
     --
-    -- https://jira.iohk.io/browse/ADP-1070
+    -- https://input-output.atlassian.net/browse/ADP-1070
     -- Adjust coin selection and fee estimation to handle pre-existing inputs
     --
     case prepareOutputs selectionConstraints outputsToCover of
@@ -108,10 +104,12 @@ performSelection selectionConstraints selectionParams =
             pure $ Left $ SelectionOutputsError e
         Right preparedOutputsToCover ->
             first SelectionBalanceError <$> Balance.performSelection
-                computeMinimumAdaQuantity
-                computeMinimumCost
-                assessTokenBundleSize
-                SelectionCriteria
+                Balance.SelectionConstraints
+                    { computeMinimumAdaQuantity
+                    , computeMinimumCost
+                    , assessTokenBundleSize
+                    }
+                Balance.SelectionParams
                     { assetsToBurn
                     , assetsToMint
                     , extraCoinSource = rewardWithdrawal
